@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎵 TITAN SONAR — Mission ATLAS Bonus</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}:root{--void:#030308;--titan:#ff9f1c;--methane:#06d6a0;--gold:#ffd60a;--red:#e63946}
+    html,body{height:100%;overflow:hidden}body{font-family:'Segoe UI',sans-serif;background:var(--void);color:#f0f4ff}
+    .game-container{display:grid;grid-template-columns:1fr 350px;grid-template-rows:auto 1fr auto;height:100vh}
+    @media(max-width:900px){.game-container{grid-template-columns:1fr;grid-template-rows:auto 1fr auto auto}}
+    .header{grid-column:1/-1;background:rgba(10,10,26,.95);padding:.5rem 1rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,159,28,.3)}
+    .back-btn{background:rgba(255,159,28,.2);border:1px solid rgba(255,159,28,.4);border-radius:8px;padding:.5rem 1rem;color:var(--titan);cursor:pointer}
+    .game-title{font-family:'Courier New',monospace}.game-title .act{color:var(--gold);font-size:.8rem}
+    .stat-value{font-family:'Courier New',monospace;font-size:1.3rem;color:var(--gold)}.stat-label{font-size:.7rem;color:#888}
+    .lang-btn{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:6px;padding:.25rem .5rem;cursor:pointer}
+    .lang-btn.active{background:rgba(255,214,10,.2);border-color:var(--gold)}
+    #gameCanvas{display:block;width:100%;height:100%;background:#0a0a1a}
+    .control-panel{background:rgba(20,15,30,.98);padding:1rem;overflow-y:auto;border-left:1px solid rgba(255,159,28,.2);display:flex;flex-direction:column;gap:1rem}
+    .panel-section{background:rgba(0,0,0,.3);border-radius:12px;padding:1rem;border:1px solid rgba(255,159,28,.2)}
+    .section-title{font-family:'Courier New',monospace;color:var(--titan);margin-bottom:.5rem}
+    .data-row{display:flex;justify-content:space-between;padding:.25rem 0;font-size:.85rem}.data-label{color:#888}.data-value{font-family:'Courier New',monospace}
+    .slider{width:100%;height:8px;-webkit-appearance:none;background:rgba(255,255,255,.1);border-radius:4px}
+    .slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--titan);cursor:pointer}
+    .formula-box{background:rgba(255,159,28,.1);border:1px solid rgba(255,159,28,.3);border-radius:8px;padding:.5rem;margin-bottom:.5rem;text-align:center}
+    .formula{font-family:'Courier New',monospace;color:var(--titan)}.formula-note{font-size:.75rem;color:#888}
+    .btn{padding:1rem;border:none;border-radius:10px;font-family:'Courier New',monospace;cursor:pointer;width:100%;margin-bottom:.5rem}
+    .btn-primary{background:linear-gradient(135deg,#ff9f1c,#e68a00);color:#000}
+    .btn-secondary{background:rgba(255,255,255,.1);color:#fff}.btn-hint{background:rgba(255,214,10,.2);color:var(--gold)}
+    .dialogue-box{background:rgba(0,0,0,.5);border-left:3px solid var(--titan);padding:.5rem;font-size:.85rem}
+    .footer{grid-column:1/-1;background:rgba(10,10,26,.95);padding:.5rem 1rem;font-size:.8rem;color:#888}
+    .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);z-index:1000;display:flex;align-items:center;justify-content:center;padding:2rem}
+    .modal-overlay.hidden{opacity:0;pointer-events:none}
+    .modal{max-width:700px;width:100%;max-height:90vh;overflow-y:auto;background:linear-gradient(135deg,rgba(30,20,10,.98),rgba(15,10,5,.98));border:2px solid var(--gold);border-radius:20px;padding:2rem}
+    .modal-title{font-family:'Courier New',monospace;font-size:1.8rem;text-align:center;color:var(--gold);margin-bottom:1rem}
+    .lang-selector-intro{display:flex;justify-content:center;gap:1rem;margin-bottom:2rem}
+    .lang-option{display:flex;flex-direction:column;align-items:center;padding:1rem;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.2);border-radius:12px;cursor:pointer;min-width:100px}
+    .lang-option.active{background:rgba(255,214,10,.2);border-color:var(--gold)}
+    .lang-flag{font-size:2.5rem}.lang-name{font-size:.85rem;color:#888}
+    .cinematic-scene{background:rgba(0,0,0,.5);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;font-family:'Courier New',monospace;line-height:1.8}
+    .briefing-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem}
+    .briefing-item{background:rgba(0,0,0,.3);border-radius:10px;padding:1rem;text-align:center}
+    .briefing-icon{font-size:2rem}.briefing-label{font-size:.8rem;color:#888}.briefing-value{font-family:'Courier New',monospace;color:var(--titan)}
+    .modal-btn{display:block;width:100%;padding:1rem;background:linear-gradient(135deg,#ffd700,#ffaa00);border:none;border-radius:12px;font-family:'Courier New',monospace;font-size:1.1rem;color:#000;cursor:pointer;margin-bottom:.5rem}
+    .modal-btn.secondary{background:rgba(255,255,255,.1);color:#fff}
+    .result-medal{font-size:5rem;text-align:center}.result-title{font-family:'Courier New',monospace;font-size:1.5rem;text-align:center;color:var(--gold)}
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+  <div class="modal-overlay" id="introModal">
+    <div class="modal">
+      <h1 class="modal-title" id="modalTitle">🎵 SONAR ΤΙΤΑΝΑ</h1>
+      <div class="lang-selector-intro">
+        <div class="lang-option active" data-lang="el" onclick="setLanguage('el')"><span class="lang-flag">🇬🇷</span><span class="lang-name">Ελληνικά</span></div>
+        <div class="lang-option" data-lang="en" onclick="setLanguage('en')"><span class="lang-flag">🇬🇧</span><span class="lang-name">English</span></div>
+        <div class="lang-option" data-lang="it" onclick="setLanguage('it')"><span class="lang-flag">🇮🇹</span><span class="lang-name">Italiano</span></div>
+        <div class="lang-option" data-lang="es" onclick="setLanguage('es')"><span class="lang-flag">🇪🇸</span><span class="lang-name">Español</span></div>
+        <div class="lang-option" data-lang="bg" onclick="setLanguage('bg')"><span class="lang-flag">🇧🇬</span><span class="lang-name">Български</span></div>
+        <div class="lang-option" data-lang="pt" onclick="setLanguage('pt')"><span class="lang-flag">🇵🇹</span><span class="lang-name">Português</span></div>
+        <div class="lang-option" data-lang="de" onclick="setLanguage('de')"><span class="lang-flag">🇩🇪</span><span class="lang-name">Deutsch</span></div>
+        <div class="lang-option" data-lang="fr" onclick="setLanguage('fr')"><span class="lang-flag">🇫🇷</span><span class="lang-name">Français</span></div>
+      </div>
+      <div class="cinematic-scene" id="introScene">Χαρτογράφησε τον πυθμένα της λίμνης μεθανίου στον Τιτάνα με sonar! Ο ήχος ταξιδεύει διαφορετικά στο υγρό μεθάνιο: v = λ·f</div>
+      <div class="briefing-grid">
+        <div class="briefing-item"><div class="briefing-icon">🎵</div><div class="briefing-label" id="bl1">Ταχύτητα Ήχου</div><div class="briefing-value">v = 1500 m/s</div></div>
+        <div class="briefing-item"><div class="briefing-icon">📏</div><div class="briefing-label" id="bl2">Βάθος Στόχου</div><div class="briefing-value">d = ? m</div></div>
+        <div class="briefing-item"><div class="briefing-icon">⏱️</div><div class="briefing-label" id="bl3">Χρόνος t</div><div class="briefing-value">d = v·t/2</div></div>
+        <div class="briefing-item"><div class="briefing-icon">🌊</div><div class="briefing-label" id="bl4">Μέσο</div><div class="briefing-value" id="bl4v">Υγρό Μεθάνιο</div></div>
+      </div>
+      <button class="modal-btn" id="startBtn" onclick="startGame()">🎵 ΕΝΑΡΞΗ</button>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="endModal">
+    <div class="modal">
+      <div class="result-medal" id="resultMedal">🥇</div>
+      <h2 class="result-title" id="resultTitle">ΕΠΙΤΥΧΙΑ!</h2>
+      <div class="cinematic-scene" id="endCinematic"></div>
+      <button class="modal-btn" id="homeBtn" onclick="goBack()">🏠 ΕΠΙΣΤΡΟΦΗ</button>
+      <button class="modal-btn secondary" id="retryBtn" onclick="retry()">ΞΑΝΑΔΟΚΙΜΑΣΕ</button>
+    </div>
+  </div>
+  <div class="game-container">
+    <header class="header">
+      <div style="display:flex;align-items:center;gap:1rem">
+        <button class="back-btn" id="backBtn" onclick="goBack()">← ΠΙΣΩ</button>
+        <div class="game-title"><div class="act">BONUS</div>TITAN SONAR</div>
+      </div>
+      <div style="display:flex;gap:2rem">
+        <div class="stat-box"><div class="stat-value" id="attemptsDisplay">0</div><div class="stat-label" id="attemptsLabel">ΠΡΟΣΠΑΘΕΙΕΣ</div></div>
+        <div class="stat-box"><div class="stat-value" id="scoreDisplay">100</div><div class="stat-label" id="scoreLabel">ΒΑΘΜΟΣ</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem">
+        <button class="lang-btn active" data-lang="el" onclick="setLanguage('el')">🇬🇷</button>
+        <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧</button>
+        <button class="lang-btn" data-lang="it" onclick="setLanguage('it')">🇮🇹</button>
+        <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">🇪🇸</button>
+        <button class="lang-btn" data-lang="bg" onclick="setLanguage('bg')">🇧🇬</button>
+        <button class="lang-btn" data-lang="pt" onclick="setLanguage('pt')">🇵🇹</button>
+        <button class="lang-btn" data-lang="de" onclick="setLanguage('de')">🇩🇪</button>
+        <button class="lang-btn" data-lang="fr" onclick="setLanguage('fr')">🇫🇷</button>
+      </div>
+    </header>
+    <div><canvas id="gameCanvas"></canvas></div>
+    <div class="control-panel">
+      <div class="panel-section">
+        <div class="section-title" id="dataTitle">📊 ΔΕΔΟΜΕΝΑ</div>
+        <div class="data-row"><span class="data-label" id="dl1">Ταχύτητα ήχου (v):</span><span class="data-value">1500 m/s</span></div>
+        <div class="data-row"><span class="data-label" id="dl2">Χρόνος ηχούς (t):</span><span class="data-value" id="echoTime">-- s</span></div>
+        <div class="data-row"><span class="data-label" id="dl3">Πραγματικό βάθος:</span><span class="data-value" id="realDepth">???</span></div>
+      </div>
+      <div class="panel-section">
+        <div class="section-title" id="guessTitle">🎯 ΕΚΤΙΜΗΣΗ ΒΑΘΟΥΣ</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:.5rem"><span id="depthLabel">Βάθος (d):</span><span id="depthDisplay">500 m</span></div>
+        <input type="range" class="slider" id="depthSlider" min="100" max="1000" value="500" step="10">
+      </div>
+      <div class="panel-section">
+        <div class="section-title" id="physicsTitle">📐 ΦΥΣΙΚΗ ΚΥΜΑΤΩΝ</div>
+        <div class="formula-box"><div class="formula">v = λ · f</div><div class="formula-note" id="fn1">Ταχύτητα = Μήκος κύματος × Συχνότητα</div></div>
+        <div class="formula-box"><div class="formula">d = v · t / 2</div><div class="formula-note" id="fn2">Βάθος (ήχος πάει-έρχεται)</div></div>
+        <div class="formula-box"><div class="formula">t = 2d / v</div><div class="formula-note" id="fn3">Χρόνος ηχούς</div></div>
+      </div>
+      <div class="panel-section">
+        <button class="btn btn-primary" id="pingBtn" onclick="sendPing()">🎵 ΑΠΟΣΤΟΛΗ PING</button>
+        <button class="btn btn-secondary" id="submitBtn" onclick="submitGuess()">✓ ΥΠΟΒΟΛΗ ΕΚΤΙΜΗΣΗΣ</button>
+        <button class="btn btn-hint" id="hintBtn" onclick="hint()">💡 ΥΠΟΔΕΙΞΗ</button>
+      </div>
+      <div class="panel-section"><div class="dialogue-box" id="dialogueText">Στείλε ένα ping και μέτρα τον χρόνο επιστροφής!</div></div>
+    </div>
+    <footer class="footer" id="footerText">SPACE: Ping | ENTER: Υποβολή | Τιτάνας — Λίμνη Kraken Mare</footer>
+  </div>
+  <script>
+    const I18N = {
+      el: {
+        modalTitle: "🎵 SONAR ΤΙΤΑΝΑ", introScene: "Χαρτογράφησε τον πυθμένα της λίμνης μεθανίου στον Τιτάνα με sonar! Ο ήχος ταξιδεύει διαφορετικά στο υγρό μεθάνιο: v = λ·f",
+        bl1: "Ταχύτητα Ήχου", bl2: "Βάθος Στόχου", bl3: "Χρόνος t", bl4: "Μέσο", bl4v: "Υγρό Μεθάνιο",
+        startBtn: "🎵 ΕΝΑΡΞΗ", backBtn: "← ΠΙΣΩ", attemptsLabel: "ΠΡΟΣΠΑΘΕΙΕΣ", scoreLabel: "ΒΑΘΜΟΣ",
+        dataTitle: "📊 ΔΕΔΟΜΕΝΑ", dl1: "Ταχύτητα ήχου (v):", dl2: "Χρόνος ηχούς (t):", dl3: "Πραγματικό βάθος:",
+        guessTitle: "🎯 ΕΚΤΙΜΗΣΗ ΒΑΘΟΥΣ", depthLabel: "Βάθος (d):", physicsTitle: "📐 ΦΥΣΙΚΗ ΚΥΜΑΤΩΝ",
+        fn1: "Ταχύτητα = Μήκος κύματος × Συχνότητα", fn2: "Βάθος (ήχος πάει-έρχεται)", fn3: "Χρόνος ηχούς",
+        pingBtn: "🎵 ΑΠΟΣΤΟΛΗ PING", submitBtn: "✓ ΥΠΟΒΟΛΗ ΕΚΤΙΜΗΣΗΣ", hintBtn: "💡 ΥΠΟΔΕΙΞΗ",
+        dialogueReady: "Στείλε ένα ping και μέτρα τον χρόνο επιστροφής!",
+        dialogueEcho: "Ηχώ! t = {t}s. Υπολόγισε: d = v·t/2",
+        footerText: "SPACE: Ping | ENTER: Υποβολή | Τιτάνας — Λίμνη Kraken Mare",
+        resultGold: "ΑΚΡΙΒΗΣ ΜΕΤΡΗΣΗ!", resultOk: "ΜΕΤΡΗΣΗ ΟΛΟΚΛΗΡΩΘΗΚΕ",
+        homeBtn: "🏠 ΕΠΙΣΤΡΟΦΗ", retryBtn: "ΞΑΝΑΔΟΚΙΜΑΣΕ",
+        realDepthLabel: "Πραγματικό βάθος", yourGuess: "Εκτίμησή σου", error: "Σφάλμα"
+      },
+      en: {
+        modalTitle: "🎵 TITAN SONAR", introScene: "Map the bottom of Titan's methane lake using sonar! Sound travels differently in liquid methane: v = λ·f",
+        bl1: "Sound Velocity", bl2: "Target Depth", bl3: "Time t", bl4: "Medium", bl4v: "Liquid Methane",
+        startBtn: "🎵 START", backBtn: "← BACK", attemptsLabel: "ATTEMPTS", scoreLabel: "SCORE",
+        dataTitle: "📊 DATA", dl1: "Sound velocity (v):", dl2: "Echo time (t):", dl3: "Actual depth:",
+        guessTitle: "🎯 DEPTH ESTIMATE", depthLabel: "Depth (d):", physicsTitle: "📐 WAVE PHYSICS",
+        fn1: "Velocity = Wavelength × Frequency", fn2: "Depth (sound goes and returns)", fn3: "Echo time",
+        pingBtn: "🎵 SEND PING", submitBtn: "✓ SUBMIT ESTIMATE", hintBtn: "💡 HINT",
+        dialogueReady: "Send a ping and measure the return time!",
+        dialogueEcho: "Echo! t = {t}s. Calculate: d = v·t/2",
+        footerText: "SPACE: Ping | ENTER: Submit | Titan — Kraken Mare Lake",
+        resultGold: "ACCURATE MEASUREMENT!", resultOk: "MEASUREMENT COMPLETE",
+        homeBtn: "🏠 RETURN", retryBtn: "TRY AGAIN",
+        realDepthLabel: "Actual depth", yourGuess: "Your estimate", error: "Error"
+      },
+      it: {
+        modalTitle: "🎵 SONAR TITANO", introScene: "Mappa il fondo del lago di metano di Titano usando il sonar! Il suono viaggia diversamente nel metano liquido: v = λ·f",
+        bl1: "Velocità Suono", bl2: "Profondità Target", bl3: "Tempo t", bl4: "Mezzo", bl4v: "Metano Liquido",
+        startBtn: "🎵 INIZIA", backBtn: "← INDIETRO", attemptsLabel: "TENTATIVI", scoreLabel: "PUNTEGGIO",
+        dataTitle: "📊 DATI", dl1: "Velocità suono (v):", dl2: "Tempo eco (t):", dl3: "Profondità reale:",
+        guessTitle: "🎯 STIMA PROFONDITÀ", depthLabel: "Profondità (d):", physicsTitle: "📐 FISICA ONDE",
+        fn1: "Velocità = Lunghezza d'onda × Frequenza", fn2: "Profondità (suono va e torna)", fn3: "Tempo eco",
+        pingBtn: "🎵 INVIA PING", submitBtn: "✓ INVIA STIMA", hintBtn: "💡 SUGGERIMENTO",
+        dialogueReady: "Invia un ping e misura il tempo di ritorno!",
+        dialogueEcho: "Eco! t = {t}s. Calcola: d = v·t/2",
+        footerText: "SPACE: Ping | ENTER: Invia | Titano — Lago Kraken Mare",
+        resultGold: "MISURA ACCURATA!", resultOk: "MISURA COMPLETATA",
+        homeBtn: "🏠 RITORNA", retryBtn: "RIPROVA",
+        realDepthLabel: "Profondità reale", yourGuess: "Tua stima", error: "Errore"
+      }
+    };
+    
+    let state = {lang:'el', phase:'intro', attempts:0, score:100, guess:500, v:1500, realDepth:0, echoTime:0, pingActive:false, pingY:0};
+    const $ = id => document.getElementById(id);
+    const canvas = $('gameCanvas'), ctx = canvas.getContext('2d');
+    
+    function t(key) { return I18N[state.lang][key] || key; }
+    
+    function setLanguage(lang) {
+      state.lang = lang;
+      localStorage.setItem('atlas_language', lang);
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+      document.querySelectorAll('.lang-option').forEach(o => o.classList.toggle('active', o.dataset.lang === lang));
+      updateAllText();
+    }
+    
+    function updateAllText() {
+      $('modalTitle').textContent = t('modalTitle'); $('introScene').textContent = t('introScene');
+      $('bl1').textContent = t('bl1'); $('bl2').textContent = t('bl2'); $('bl3').textContent = t('bl3'); $('bl4').textContent = t('bl4'); $('bl4v').textContent = t('bl4v');
+      $('startBtn').textContent = t('startBtn'); $('backBtn').textContent = t('backBtn');
+      $('attemptsLabel').textContent = t('attemptsLabel'); $('scoreLabel').textContent = t('scoreLabel');
+      $('dataTitle').textContent = t('dataTitle');
+      $('dl1').textContent = t('dl1'); $('dl2').textContent = t('dl2'); $('dl3').textContent = t('dl3');
+      $('guessTitle').textContent = t('guessTitle'); $('depthLabel').textContent = t('depthLabel');
+      $('physicsTitle').textContent = t('physicsTitle');
+      $('fn1').textContent = t('fn1'); $('fn2').textContent = t('fn2'); $('fn3').textContent = t('fn3');
+      $('pingBtn').textContent = t('pingBtn'); $('submitBtn').textContent = t('submitBtn'); $('hintBtn').textContent = t('hintBtn');
+      $('dialogueText').textContent = t('dialogueReady'); $('footerText').textContent = t('footerText');
+      $('homeBtn').textContent = t('homeBtn'); $('retryBtn').textContent = t('retryBtn');
+    }
+    
+    function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
+    function generateDepth() { state.realDepth = Math.round(200 + Math.random() * 600); state.echoTime = (2 * state.realDepth / state.v); }
+    
+    function render() {
+      const W = canvas.width, H = canvas.height;
+      const sky = ctx.createLinearGradient(0, 0, 0, H*0.3);
+      sky.addColorStop(0, '#1a0a00'); sky.addColorStop(1, '#332211');
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H*0.3);
+      const lake = ctx.createLinearGradient(0, H*0.3, 0, H);
+      lake.addColorStop(0, '#1a3a3a'); lake.addColorStop(1, '#0a1a1a');
+      ctx.fillStyle = lake; ctx.fillRect(0, H*0.3, W, H*0.7);
+      ctx.fillStyle = '#ff9f1c'; ctx.beginPath(); ctx.ellipse(W/2, H*0.35, 40, 20, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ccc'; ctx.beginPath(); ctx.arc(W/2, H*0.35, 10, 0, Math.PI*2); ctx.fill();
+      const bottomY = H*0.3 + ((state.realDepth/1000) * (H*0.65));
+      ctx.fillStyle = '#332211'; ctx.fillRect(0, bottomY, W, H-bottomY);
+      ctx.fillStyle = '#ff9f1c'; ctx.font = '14px monospace'; ctx.fillText('??? m', W/2-20, bottomY+20);
+      if (state.pingActive) {
+        ctx.strokeStyle = 'rgba(6,214,160,0.5)'; ctx.lineWidth = 3;
+        for (let i = 0; i < 3; i++) {
+          ctx.beginPath(); ctx.arc(W/2, H*0.35+state.pingY-i*20, 20+i*10, 0, Math.PI*2); ctx.stroke();
+        }
+      }
+      ctx.fillStyle = '#ffd60a'; ctx.font = '16px monospace';
+      ctx.fillText('v = ' + state.v + ' m/s', 20, 30);
+      if (state.echoTime > 0 && !state.pingActive) ctx.fillText('t = ' + state.echoTime.toFixed(3) + ' s', 20, 55);
+    }
+    
+    function sendPing() {
+      if (state.pingActive) return;
+      state.pingActive = true; state.pingY = 0;
+      const targetY = canvas.height*0.3 + ((state.realDepth/1000) * (canvas.height*0.65)) - canvas.height*0.35;
+      const anim = () => {
+        state.pingY += 10; render();
+        if (state.pingY < targetY*2) requestAnimationFrame(anim);
+        else {
+          state.pingActive = false;
+          $('echoTime').textContent = state.echoTime.toFixed(3) + ' s';
+          $('dialogueText').textContent = t('dialogueEcho').replace('{t}', state.echoTime.toFixed(3));
+          render();
+        }
+      };
+      anim();
+    }
+    
+    function submitGuess() {
+      state.attempts++; $('attemptsDisplay').textContent = state.attempts;
+      const error = Math.abs(state.guess - state.realDepth);
+      const errorPct = (error / state.realDepth) * 100;
+      showEnd(errorPct < 10, error, errorPct);
+    }
+    
+    function showEnd(ok, err, pct) {
+      state.score = ok ? Math.max(0, 100 - (state.attempts-1)*15 - pct) : Math.max(0, 50 - pct);
+      $('resultMedal').textContent = pct < 5 ? '🥇' : pct < 10 ? '🥈' : pct < 20 ? '🥉' : '💔';
+      $('resultTitle').textContent = pct < 10 ? t('resultGold') : t('resultOk');
+      $('endCinematic').innerHTML = '<p>' + t('realDepthLabel') + ': ' + state.realDepth + ' m</p><p>' + t('yourGuess') + ': ' + state.guess + ' m</p><p>' + t('error') + ': ' + err + ' m (' + pct.toFixed(1) + '%)</p>';
+      $('realDepth').textContent = state.realDepth + ' m';
+      $('endModal').classList.remove('hidden');
+      localStorage.setItem('atlas_bonus_completed', 'true');
+    }
+    
+    function hint() {
+      // Only show the formula and the known values, NOT the calculated answer
+      const hints = {
+        el: 'Τύπος: d = v·t/2. Έχεις: v = ' + state.v + ' m/s, t = ' + state.echoTime.toFixed(3) + ' s. Κάνε τον υπολογισμό!',
+        en: 'Formula: d = v·t/2. You have: v = ' + state.v + ' m/s, t = ' + state.echoTime.toFixed(3) + ' s. Do the calculation!',
+        it: 'Formula: d = v·t/2. Hai: v = ' + state.v + ' m/s, t = ' + state.echoTime.toFixed(3) + ' s. Fai il calcolo!'
+      };
+      $('dialogueText').textContent = hints[state.language] || hints.el;
+      state.score = Math.max(0, state.score - 5);
+      $('scoreDisplay').textContent = state.score;
+    }
+    
+    function startGame() { state.phase = 'ready'; generateDepth(); $('introModal').classList.add('hidden'); }
+    function goBack() { window.location.href = 'index.html'; }
+    function retry() { $('endModal').classList.add('hidden'); state.attempts = 0; state.score = 100; $('attemptsDisplay').textContent = '0'; $('scoreDisplay').textContent = '100'; generateDepth(); $('echoTime').textContent = '-- s'; $('realDepth').textContent = '???'; }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      const sl = localStorage.getItem('atlas_language'); if (sl) setLanguage(sl); else updateAllText();
+      resize(); window.addEventListener('resize', () => { resize(); render(); });
+      $('depthSlider').addEventListener('input', e => { state.guess = parseInt(e.target.value); $('depthDisplay').textContent = state.guess + ' m'; });
+      document.addEventListener('keydown', e => { if (e.code === 'Space') sendPing(); if (e.code === 'Enter') submitGuess(); });
+      render();
+    });
+  </script>
+</body>
+</html>
