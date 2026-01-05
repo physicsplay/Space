@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔴 MARS CARGO DROP — Mission ATLAS Act 3</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --void-black: #030308;
+      --mars-sky: #1a0a0a;
+      --mars-red: #c44536;
+      --mars-dark: #6b1d1d;
+      --mars-light: #e87461;
+      --star-white: #f0f4ff;
+      --ice-blue: #a8dadc;
+      --thrust-orange: #ff6b35;
+      --warning-red: #e63946;
+      --success-green: #06d6a0;
+      --gold: #ffd60a;
+      --silver: #c0c0c0;
+      --bronze: #cd7f32;
+      --moon-gray: #888899;
+      --font-display: 'Courier New', monospace;
+      --font-body: 'Segoe UI', system-ui, sans-serif;
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 2rem;
+      --space-xl: 3rem;
+      --glow-red: 0 0 20px rgba(230, 57, 70, 0.5);
+      --glow-gold: 0 0 20px rgba(255, 214, 10, 0.5), 0 0 40px rgba(255, 214, 10, 0.3);
+      --glow-ice: 0 0 20px rgba(168, 218, 220, 0.5);
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--void-black);
+      color: var(--star-white);
+    }
+
+    .game-container {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+    }
+
+    @media (max-width: 900px) {
+      .game-container { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; }
+    }
+
+    .header {
+      grid-column: 1 / -1;
+      background: linear-gradient(180deg, rgba(26, 10, 10, 0.95), rgba(26, 10, 10, 0.8));
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 100;
+    }
+
+    .header-left { display: flex; align-items: center; gap: var(--space-md); }
+
+    .back-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: var(--space-sm) var(--space-md);
+      color: var(--star-white);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+    .game-title { font-family: var(--font-display); font-size: 1.2rem; letter-spacing: 0.1em; }
+    .game-title .act { color: var(--gold); font-size: 0.8rem; }
+
+    .header-center { display: flex; gap: var(--space-lg); }
+    .stat-box { text-align: center; }
+    .stat-value { font-family: var(--font-display); font-size: 1.3rem; font-weight: bold; }
+    .stat-value.attempts { color: var(--mars-red); }
+    .stat-value.score { color: var(--gold); }
+    .stat-value.hints { color: var(--thrust-orange); }
+    .stat-label { font-size: 0.7rem; color: var(--moon-gray); text-transform: uppercase; letter-spacing: 0.1em; }
+
+    .header-right { display: flex; gap: var(--space-sm); }
+
+    .lang-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      padding: var(--space-xs) var(--space-sm);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .lang-btn:hover, .lang-btn.active {
+      background: rgba(255, 214, 10, 0.2);
+      border-color: var(--gold);
+    }
+
+    .canvas-wrapper { position: relative; background: var(--mars-sky); overflow: hidden; }
+    #gameCanvas { display: block; width: 100%; height: 100%; }
+
+    .control-panel {
+      background: linear-gradient(180deg, rgba(40, 20, 20, 0.98), rgba(20, 10, 10, 0.98));
+      padding: var(--space-md);
+      overflow-y: auto;
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    @media (max-width: 900px) {
+      .control-panel { border-left: none; border-top: 1px solid rgba(255, 255, 255, 0.1); max-height: 40vh; }
+    }
+
+    .panel-section {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      padding: var(--space-md);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      color: var(--gold);
+      margin-bottom: var(--space-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .data-row { display: flex; justify-content: space-between; align-items: center; padding: var(--space-xs) 0; font-size: 0.85rem; }
+    .data-label { color: var(--moon-gray); }
+    .data-value { font-family: var(--font-display); color: var(--star-white); }
+    .data-value.warning { color: var(--warning-red); animation: pulse 1s ease-in-out infinite; }
+    .data-value.success { color: var(--success-green); }
+    .data-value.mars { color: var(--mars-light); }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+    .slider-group { margin-bottom: var(--space-md); }
+    .slider-header { display: flex; justify-content: space-between; margin-bottom: var(--space-xs); }
+    .slider-label { font-size: 0.85rem; color: var(--moon-gray); }
+    .slider-value { font-family: var(--font-display); font-size: 0.9rem; color: var(--mars-light); }
+
+    .slider {
+      width: 100%;
+      height: 8px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c44536 0%, #e63946 100%);
+      cursor: pointer;
+      box-shadow: var(--glow-red);
+    }
+
+    .formula-box {
+      background: rgba(196, 69, 54, 0.1);
+      border: 1px solid rgba(196, 69, 54, 0.3);
+      border-radius: 8px;
+      padding: var(--space-sm);
+      margin-bottom: var(--space-sm);
+    }
+
+    .formula { font-family: var(--font-display); font-size: 0.9rem; color: var(--mars-light); text-align: center; }
+    .formula-note { font-size: 0.75rem; color: var(--moon-gray); text-align: center; margin-top: var(--space-xs); }
+
+    .btn-group { display: flex; flex-direction: column; gap: var(--space-sm); }
+
+    .btn {
+      padding: var(--space-md);
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-primary { background: linear-gradient(135deg, #c44536 0%, #e63946 100%); color: white; }
+    .btn-primary:hover:not(:disabled) { transform: scale(1.02); box-shadow: var(--glow-red); }
+    .btn-primary:disabled { background: rgba(255, 255, 255, 0.1); color: var(--moon-gray); cursor: not-allowed; }
+    .btn-secondary { background: rgba(255, 255, 255, 0.1); color: var(--star-white); border: 1px solid rgba(255, 255, 255, 0.2); }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+    .btn-hint { background: rgba(255, 214, 10, 0.2); color: var(--gold); border: 1px solid rgba(255, 214, 10, 0.3); }
+
+    .dialogue-box {
+      background: rgba(0, 0, 0, 0.5);
+      border-left: 3px solid var(--mars-red);
+      padding: var(--space-sm);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      min-height: 60px;
+    }
+
+    .dialogue-speaker { color: var(--mars-red); font-weight: bold; font-size: 0.75rem; margin-bottom: var(--space-xs); }
+    .dialogue-text { color: var(--star-white); }
+    .dialogue-text .highlight { color: var(--gold); }
+    .dialogue-text .ice { color: var(--ice-blue); }
+
+    .footer {
+      grid-column: 1 / -1;
+      background: rgba(26, 10, 10, 0.95);
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.8rem;
+      color: var(--moon-gray);
+    }
+
+    .controls-hint { display: flex; gap: var(--space-md); }
+    .key { background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 4px; font-family: var(--font-display); font-size: 0.75rem; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-lg);
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+
+    .modal {
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: linear-gradient(135deg, rgba(26, 10, 10, 0.98), rgba(46, 20, 20, 0.98));
+      border: 2px solid var(--gold);
+      border-radius: 20px;
+      padding: var(--space-xl);
+      animation: modalAppear 0.5s ease;
+    }
+
+    @keyframes modalAppear { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      text-align: center;
+      margin-bottom: var(--space-md);
+      background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .lang-selector-intro {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+      padding: var(--space-md);
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+    }
+
+    .lang-selector-intro .lang-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-md);
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 100px;
+    }
+
+    .lang-selector-intro .lang-option:hover {
+      background: rgba(255, 214, 10, 0.1);
+      border-color: rgba(255, 214, 10, 0.5);
+      transform: translateY(-3px);
+    }
+
+    .lang-selector-intro .lang-option.active {
+      background: rgba(255, 214, 10, 0.2);
+      border-color: var(--gold);
+      box-shadow: var(--glow-gold);
+    }
+
+    .lang-selector-intro .lang-flag { font-size: 2.5rem; }
+    .lang-selector-intro .lang-name { font-size: 0.85rem; color: var(--moon-gray); font-weight: bold; }
+    .lang-selector-intro .lang-option.active .lang-name { color: var(--gold); }
+
+    .lang-label {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--moon-gray);
+      margin-bottom: var(--space-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .cinematic-scene {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 12px;
+      padding: var(--space-lg);
+      margin-bottom: var(--space-lg);
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      line-height: 1.8;
+    }
+
+    .scene-direction { color: var(--moon-gray); font-style: italic; margin-bottom: var(--space-sm); }
+    .scene-dialogue { margin-bottom: var(--space-md); }
+    .scene-speaker { color: var(--mars-red); font-weight: bold; }
+    .scene-speaker.vega { color: #e63946; }
+    .scene-speaker.newton { color: #a8dadc; }
+    .scene-speaker.patel { color: #06d6a0; }
+    .scene-speaker.player { color: var(--gold); }
+    .scene-text { color: var(--star-white); margin-left: var(--space-md); }
+    .scene-text .emphasis { color: var(--gold); font-weight: bold; }
+    .scene-text .ice { color: var(--ice-blue); }
+
+    .briefing-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+
+    @media (max-width: 500px) {
+      .briefing-grid { grid-template-columns: 1fr; }
+      .lang-selector-intro { flex-wrap: wrap; }
+      .lang-selector-intro .lang-option { min-width: 80px; padding: var(--space-sm); }
+      .lang-selector-intro .lang-flag { font-size: 2rem; }
+    }
+
+    .briefing-item {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      padding: var(--space-md);
+      text-align: center;
+    }
+
+    .briefing-icon { font-size: 2rem; margin-bottom: var(--space-sm); }
+    .briefing-label { font-size: 0.75rem; color: var(--moon-gray); margin-bottom: var(--space-xs); }
+    .briefing-value { font-family: var(--font-display); font-size: 1.1rem; color: var(--mars-light); }
+
+    .result-display { text-align: center; margin-bottom: var(--space-lg); }
+    .result-medal { font-size: 5rem; margin-bottom: var(--space-md); animation: medalBounce 0.5s ease; }
+    @keyframes medalBounce { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+    .result-title { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: var(--space-sm); }
+    .result-title.gold { color: var(--gold); }
+    .result-title.silver { color: var(--silver); }
+    .result-title.bronze { color: var(--bronze); }
+    .result-title.fail { color: var(--warning-red); }
+
+    .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); margin-bottom: var(--space-lg); }
+    .result-stat { background: rgba(0, 0, 0, 0.3); border-radius: 10px; padding: var(--space-md); }
+    .result-stat-value { font-family: var(--font-display); font-size: 1.5rem; color: var(--gold); }
+    .result-stat-label { font-size: 0.75rem; color: var(--moon-gray); }
+
+    .analysis-section {
+      background: rgba(196, 69, 54, 0.1);
+      border: 1px solid rgba(196, 69, 54, 0.3);
+      border-radius: 12px;
+      padding: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+
+    .analysis-title { font-size: 0.9rem; color: var(--mars-light); margin-bottom: var(--space-sm); }
+    .analysis-row { display: flex; justify-content: space-between; padding: var(--space-xs) 0; font-size: 0.85rem; }
+    .analysis-label { color: var(--moon-gray); }
+    .analysis-value { font-family: var(--font-display); }
+    .analysis-value.theoretical { color: var(--mars-light); }
+    .analysis-value.actual { color: var(--ice-blue); }
+    .analysis-value.error { color: var(--warning-red); }
+    .analysis-value.good { color: var(--success-green); }
+
+    .modal-btn {
+      display: block;
+      width: 100%;
+      padding: var(--space-md);
+      background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+      border: none;
+      border-radius: 12px;
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      color: var(--void-black);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .modal-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(255, 214, 10, 0.5); }
+    .modal-btn.secondary { background: rgba(255, 255, 255, 0.1); color: var(--star-white); margin-top: var(--space-sm); }
+    .modal-btn.victory { background: linear-gradient(135deg, #06d6a0 0%, #00a878 100%); }
+
+    .pause-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .pause-overlay.active { opacity: 1; pointer-events: all; }
+    .pause-content { text-align: center; padding: var(--space-xl); }
+    .pause-title { font-family: var(--font-display); font-size: 2rem; color: var(--gold); margin-bottom: var(--space-md); }
+    .pause-subtitle { color: var(--star-white); margin-bottom: var(--space-lg); }
+    .pause-data { background: rgba(0, 0, 0, 0.5); border-radius: 12px; padding: var(--space-lg); margin-bottom: var(--space-lg); display: inline-block; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <!-- INTRO MODAL -->
+  <div class="modal-overlay" id="introModal">
+    <div class="modal">
+      <h1 class="modal-title">🔴 <span id="introTitle">ΡΙΨΗ ΕΦΟΔΙΩΝ ΑΡΗΣ</span></h1>
+      
+      <div class="lang-label" id="langLabel">ΕΠΙΛΕΞΤΕ ΓΛΩΣΣΑ / SELECT LANGUAGE / SELEZIONA LINGUA</div>
+      <div class="lang-selector-intro">
+        <div class="lang-option active" data-lang="el" onclick="setLanguage('el')">
+          <span class="lang-flag">🇬🇷</span>
+          <span class="lang-name">Ελληνικά</span>
+        </div>
+        <div class="lang-option" data-lang="en" onclick="setLanguage('en')">
+          <span class="lang-flag">🇬🇧</span>
+          <span class="lang-name">English</span>
+        </div>
+        <div class="lang-option" data-lang="it" onclick="setLanguage('it')">
+          <span class="lang-flag">🇮🇹</span>
+          <span class="lang-name">Italiano</span>
+        </div>
+      </div>
+      
+      <div class="cinematic-scene" id="cinematicScene"></div>
+      
+      <div class="briefing-grid">
+        <div class="briefing-item">
+          <div class="briefing-icon">🔴</div>
+          <div class="briefing-label" id="briefingLabel1">Βαρύτητα Άρη</div>
+          <div class="briefing-value">g = 3.71 m/s²</div>
+        </div>
+        <div class="briefing-item">
+          <div class="briefing-icon">⬇️</div>
+          <div class="briefing-label" id="briefingLabel2">Ύψος Γκρεμού</div>
+          <div class="briefing-value">h = 200 m</div>
+        </div>
+        <div class="briefing-item">
+          <div class="briefing-icon">➡️</div>
+          <div class="briefing-label" id="briefingLabel3">Απόσταση Σπηλιάς</div>
+          <div class="briefing-value">d = 350 m</div>
+        </div>
+        <div class="briefing-item">
+          <div class="briefing-icon">🎯</div>
+          <div class="briefing-label" id="briefingLabel4">Στόχος Ακρίβειας</div>
+          <div class="briefing-value">±10 m</div>
+        </div>
+      </div>
+      
+      <button class="modal-btn" id="startGameBtn">
+        🔴 <span id="startBtnText">ΕΝΑΡΞΗ ΑΠΟΣΤΟΛΗΣ</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- PAUSE OVERLAY -->
+  <div class="pause-overlay" id="pauseOverlay">
+    <div class="pause-content">
+      <h2 class="pause-title">⏸️ <span id="pauseTitle">ΠΑΥΣΗ</span></h2>
+      <p class="pause-subtitle" id="pauseSubtitle">Υπολόγισε την οριζόντια βολή!</p>
+      <div class="pause-data">
+        <div class="formula-box">
+          <div class="formula">x = v₀ · t</div>
+          <div class="formula-note" id="formulaP1">Οριζόντια κίνηση (ομαλή)</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">y = ½ · g · t²</div>
+          <div class="formula-note" id="formulaP2">Κατακόρυφη κίνηση (ελεύθερη πτώση)</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">t = √(2h/g)</div>
+          <div class="formula-note" id="formulaP3">Χρόνος πτώσης</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="togglePause()">
+        ▶️ <span id="resumeBtnText">ΣΥΝΕΧΕΙΑ</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- END MODAL -->
+  <div class="modal-overlay hidden" id="endModal">
+    <div class="modal">
+      <div class="result-display">
+        <div class="result-medal" id="resultMedal">🥇</div>
+        <h2 class="result-title gold" id="resultTitle">ΤΕΛΕΙΑ ΡΙΨΗ!</h2>
+      </div>
+      <div class="cinematic-scene" id="endCinematic"></div>
+      <div class="result-stats">
+        <div class="result-stat">
+          <div class="result-stat-value" id="finalScore">100</div>
+          <div class="result-stat-label" id="scoreStatLabel">ΒΑΘΜΟΣ</div>
+        </div>
+        <div class="result-stat">
+          <div class="result-stat-value" id="finalAttempts">1</div>
+          <div class="result-stat-label" id="attemptsStatLabel">ΠΡΟΣΠΑΘΕΙΕΣ</div>
+        </div>
+        <div class="result-stat">
+          <div class="result-stat-value" id="finalError">2.5</div>
+          <div class="result-stat-label" id="errorStatLabel">ΑΠΟΚΛΙΣΗ (m)</div>
+        </div>
+      </div>
+      <div class="analysis-section">
+        <div class="analysis-title" id="analysisTitle">📊 ΑΝΑΛΥΣΗ ΟΡΙΖΟΝΤΙΑΣ ΒΟΛΗΣ</div>
+        <div class="analysis-row">
+          <span class="analysis-label" id="flightTimeLabel">Χρόνος πτώσης:</span>
+          <span class="analysis-value theoretical" id="flightTimeValue">--</span>
+        </div>
+        <div class="analysis-row">
+          <span class="analysis-label" id="theoreticalLabel">Θεωρητικό v₀:</span>
+          <span class="analysis-value theoretical" id="theoreticalV">--</span>
+        </div>
+        <div class="analysis-row">
+          <span class="analysis-label" id="actualLabel">Εφαρμοσμένο v₀:</span>
+          <span class="analysis-value actual" id="actualV">--</span>
+        </div>
+        <div class="analysis-row">
+          <span class="analysis-label" id="landingLabel">Σημείο πρόσκρουσης:</span>
+          <span class="analysis-value" id="landingValue">--</span>
+        </div>
+      </div>
+      <button class="modal-btn victory" id="victoryBtn">
+        🏆 <span id="victoryBtnText">ΑΠΟΣΤΟΛΗ ΟΛΟΚΛΗΡΩΘΗΚΕ!</span>
+      </button>
+      <button class="modal-btn secondary" id="retryBtn">
+        ↺ <span id="retryBtnText">ΔΟΚΙΜΑΣΕ ΞΑΝΑ</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN GAME -->
+  <div class="game-container">
+    <header class="header">
+      <div class="header-left">
+        <button class="back-btn" onclick="goBack()">← <span id="backText">ΠΙΣΩ</span></button>
+        <div class="game-title">
+          <div class="act">ACT 3</div>
+          <span id="headerTitle">MARS CARGO DROP</span>
+        </div>
+      </div>
+      <div class="header-center">
+        <div class="stat-box">
+          <div class="stat-value attempts" id="attemptsDisplay">0</div>
+          <div class="stat-label" id="attemptsLabel">ΠΡΟΣΠΑΘΕΙΕΣ</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value score" id="scoreDisplay">100</div>
+          <div class="stat-label" id="scoreLabelHeader">ΒΑΘΜΟΣ</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value hints" id="hintsDisplay">0</div>
+          <div class="stat-label" id="hintsLabel">HINTS</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="lang-btn active" data-lang="el" onclick="setLanguage('el')">🇬🇷</button>
+        <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧</button>
+        <button class="lang-btn" data-lang="it" onclick="setLanguage('it')">🇮🇹</button>
+        <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">🇪🇸</button>
+        <button class="lang-btn" data-lang="bg" onclick="setLanguage('bg')">🇧🇬</button>
+        <button class="lang-btn" data-lang="pt" onclick="setLanguage('pt')">🇵🇹</button>
+        <button class="lang-btn" data-lang="de" onclick="setLanguage('de')">🇩🇪</button>
+        <button class="lang-btn" data-lang="fr" onclick="setLanguage('fr')">🇫🇷</button>
+      </div>
+    </header>
+
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div class="control-panel">
+      <div class="panel-section">
+        <div class="section-title"><span>📡</span><span id="missionDataTitle">ΔΕΔΟΜΕΝΑ ΑΠΟΣΤΟΛΗΣ</span></div>
+        <div class="data-row">
+          <span class="data-label" id="cliffLabel">Ύψος γκρεμού:</span>
+          <span class="data-value mars" id="cliffValue">200 m</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label" id="targetDistLabel">Απόσταση σπηλιάς:</span>
+          <span class="data-value" id="targetDistValue">350 m</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label" id="gravityLabel">Βαρύτητα Άρη:</span>
+          <span class="data-value mars" id="gravityValue">3.71 m/s²</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label" id="flightLabel">Χρόνος πτήσης:</span>
+          <span class="data-value" id="flightValue">-- s</span>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title"><span>🚀</span><span id="launchTitle">ΕΛΕΓΧΟΣ ΕΚΤΟΞΕΥΣΗΣ</span></div>
+        <div class="slider-group">
+          <div class="slider-header">
+            <span class="slider-label" id="velocityLabel">Αρχική Ταχύτητα (v₀):</span>
+            <span class="slider-value" id="velocityDisplay">0 m/s</span>
+          </div>
+          <input type="range" class="slider" id="velocitySlider" min="0" max="100" value="0" step="1">
+        </div>
+        <p style="font-size: 0.75rem; color: var(--moon-gray); text-align: center;" id="velocityHint">
+          Οριζόντια ταχύτητα εκτόξευσης του φορτίου
+        </p>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title"><span>📐</span><span id="physicsTitle">ΟΡΙΖΟΝΤΙΑ ΒΟΛΗ</span></div>
+        <div class="formula-box">
+          <div class="formula">x = v₀ · t</div>
+          <div class="formula-note" id="formulaNote1">Οριζόντια: ομαλή κίνηση</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">y = ½ · g · t²</div>
+          <div class="formula-note" id="formulaNote2">Κατακόρυφη: ελεύθερη πτώση</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">t = √(2h/g) ≈ 10.4 s</div>
+          <div class="formula-note" id="formulaNote3">Χρόνος για h=200m, g=3.71</div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="btn-group">
+          <button class="btn btn-primary" id="launchBtn">
+            🚀 <span id="launchBtnText">ΕΚΤΟΞΕΥΣΗ ΦΟΡΤΙΟΥ</span>
+          </button>
+          <button class="btn btn-secondary" id="resetBtn" disabled>
+            ↺ <span id="resetBtnText">ΕΠΑΝΑΦΟΡΑ</span>
+          </button>
+          <button class="btn btn-hint" id="hintBtn">
+            💡 <span id="hintBtnText">ΥΠΟΔΕΙΞΗ (-5)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="dialogue-box">
+          <div class="dialogue-speaker" id="dialogueSpeaker">NEWTON:</div>
+          <div class="dialogue-text" id="dialogueText">
+            Οριζόντια βολή: η οριζόντια κίνηση είναι <span class="highlight">ανεξάρτητη</span> από την κατακόρυφη!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="controls-hint">
+        <span><span class="key">SPACE</span> <span id="keyLaunch">Εκτόξευση</span></span>
+        <span><span class="key">P</span> <span id="keyPause">Παύση</span></span>
+        <span><span class="key">R</span> <span id="keyReset">Επαναφορά</span></span>
+        <span><span class="key">H</span> <span id="keyHint">Υπόδειξη</span></span>
+      </div>
+      <div id="footerInfo">Άρης — Valles Marineris | g = 3.71 m/s²</div>
+    </footer>
+  </div>
+
+  <script>
+    /* ===== I18N ===== */
+    const I18N = {
+      el: {
+        langLabel: "ΕΠΙΛΕΞΤΕ ΓΛΩΣΣΑ",
+        introTitle: "ΡΙΨΗ ΕΦΟΔΙΩΝ ΑΡΗΣ",
+        headerTitle: "MARS CARGO DROP",
+        startBtnText: "ΕΝΑΡΞΗ ΑΠΟΣΤΟΛΗΣ",
+        backText: "ΠΙΣΩ",
+        attemptsLabel: "ΠΡΟΣΠΑΘΕΙΕΣ",
+        scoreLabelHeader: "ΒΑΘΜΟΣ",
+        hintsLabel: "HINTS",
+        missionDataTitle: "ΔΕΔΟΜΕΝΑ ΑΠΟΣΤΟΛΗΣ",
+        cliffLabel: "Ύψος γκρεμού:",
+        targetDistLabel: "Απόσταση σπηλιάς:",
+        gravityLabel: "Βαρύτητα Άρη:",
+        flightLabel: "Χρόνος πτήσης:",
+        launchTitle: "ΕΛΕΓΧΟΣ ΕΚΤΟΞΕΥΣΗΣ",
+        velocityLabel: "Αρχική Ταχύτητα (v₀):",
+        velocityHint: "Οριζόντια ταχύτητα εκτόξευσης του φορτίου",
+        physicsTitle: "ΟΡΙΖΟΝΤΙΑ ΒΟΛΗ",
+        formulaNote1: "Οριζόντια: ομαλή κίνηση",
+        formulaNote2: "Κατακόρυφη: ελεύθερη πτώση",
+        formulaNote3: "Χρόνος για h=200m, g=3.71",
+        launchBtnText: "ΕΚΤΟΞΕΥΣΗ ΦΟΡΤΙΟΥ",
+        resetBtnText: "ΕΠΑΝΑΦΟΡΑ",
+        hintBtnText: "ΥΠΟΔΕΙΞΗ (-5)",
+        keyLaunch: "Εκτόξευση",
+        keyPause: "Παύση",
+        keyReset: "Επαναφορά",
+        keyHint: "Υπόδειξη",
+        pauseTitle: "ΠΑΥΣΗ",
+        pauseSubtitle: "Υπολόγισε την οριζόντια βολή!",
+        formulaP1: "Οριζόντια κίνηση (ομαλή)",
+        formulaP2: "Κατακόρυφη κίνηση (ελεύθερη πτώση)",
+        formulaP3: "Χρόνος πτώσης",
+        resumeBtnText: "ΣΥΝΕΧΕΙΑ",
+        scoreStatLabel: "ΒΑΘΜΟΣ",
+        attemptsStatLabel: "ΠΡΟΣΠΑΘΕΙΕΣ",
+        errorStatLabel: "ΑΠΟΚΛΙΣΗ (m)",
+        analysisTitle: "📊 ΑΝΑΛΥΣΗ ΟΡΙΖΟΝΤΙΑΣ ΒΟΛΗΣ",
+        flightTimeLabel: "Χρόνος πτώσης:",
+        theoreticalLabel: "Θεωρητικό v₀:",
+        actualLabel: "Εφαρμοσμένο v₀:",
+        landingLabel: "Σημείο πρόσκρουσης:",
+        victoryBtnText: "ΑΠΟΣΤΟΛΗ ΟΛΟΚΛΗΡΩΘΗΚΕ!",
+        retryBtnText: "ΔΟΚΙΜΑΣΕ ΞΑΝΑ",
+        briefingLabel1: "Βαρύτητα Άρη",
+        briefingLabel2: "Ύψος Γκρεμού",
+        briefingLabel3: "Απόσταση Σπηλιάς",
+        briefingLabel4: "Στόχος Ακρίβειας",
+        footerInfo: "Άρης — Valles Marineris | g = 3.71 m/s²",
+        cinematicScene: `
+          <div class="scene-direction">[Άρης — 6 μήνες μετά την αναχώρηση από τη Γη]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Βρήκαμε μια <span class="ice">σπηλιά πάγου</span> — τέλειο καταφύγιο για τη βάση. Αλλά είναι στη βάση ενός γκρεμού <span class="emphasis">200 μέτρων</span>."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"Η σπηλιά βρίσκεται <span class="emphasis">350 μέτρα</span> οριζόντια από την άκρη. Πρέπει να εκτοξεύσεις τα εφόδια με την κατάλληλη ταχύτητα."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker patel">DR. PATEL:</span>
+            <span class="scene-text">"Έχουμε εφόδια για <span class="emphasis">μία προσπάθεια</span>. Αν χάσεις, τα χάνουμε για πάντα."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker player">ΕΣΥ:</span>
+            <span class="scene-text">"x = v₀·t, y = ½gt²... Με g = 3.71 m/s² στον Άρη, ο χρόνος πτώσης είναι..."</span>
+          </div>
+        `,
+        dialogueReady: "Οριζόντια βολή: η οριζόντια κίνηση είναι <span class='highlight'>ανεξάρτητη</span> από την κατακόρυφη!",
+        dialogueFlying: "Το φορτίο πετάει! Η παραβολική τροχιά είναι ομορφη...",
+        dialogueSuccess: "Τέλεια ρίψη! Τα εφόδια προσγειώθηκαν στη σπηλιά!",
+        dialogueFail: "Τα εφόδια έπεσαν εκτός στόχου! Χάθηκαν για πάντα...",
+        dialogueClose: "Σχεδόν! Λίγο πιο ακριβής υπολογισμός την επόμενη φορά.",
+        dialogueHint: "Υπόδειξη: t = √(2h/g) ≈ 10.4s. Άρα v₀ = d/t ≈ 350/10.4 ≈ 33.7 m/s",
+        resultGold: "ΤΕΛΕΙΑ ΡΙΨΗ!",
+        resultSilver: "ΚΑΛΗ ΡΙΨΗ!",
+        resultBronze: "ΕΠΙΤΥΧΗΣ ΡΙΨΗ",
+        resultFail: "ΑΠΟΤΥΧΙΑ ΡΙΨΗΣ",
+        endSuccess: `
+          <div class="scene-direction">[Σπηλιά Πάγου — Εφόδια προσγειωμένα]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"Πρόσκρουση επιτυχής. Τα εφόδια είναι στη σπηλιά. Αυτό ήταν... αξιοσημείωτα ακριβές."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Calculator... Alex... χωρίς εσένα, θα ήμασταν νεκροί τρεις φορές. Η φυσική μας έσωσε τη ζωή."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker patel">DR. PATEL:</span>
+            <span class="scene-text">"Σου χρωστάω δύο γεύματα τώρα. Θα τα πάρεις όταν φτιάξουμε τη βάση."</span>
+          </div>
+        `,
+        endFail: `
+          <div class="scene-direction">[Γκρεμός — Τα εφόδια χάθηκαν]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"Τα εφόδια δεν έφτασαν τον στόχο. Κατάσταση: καταστράφηκαν."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker patel">DR. PATEL:</span>
+            <span class="scene-text">"Αυτά ήταν τα μόνα εφόδια μας... θα πρέπει να βρούμε άλλη λύση."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Δοκίμασε ξανά. Η φυσική είναι η ίδια. Μόνο οι υπολογισμοί αλλάζουν."</span>
+          </div>
+        `
+      },
+      en: {
+        langLabel: "SELECT LANGUAGE",
+        introTitle: "MARS CARGO DROP",
+        headerTitle: "MARS CARGO DROP",
+        startBtnText: "START MISSION",
+        backText: "BACK",
+        attemptsLabel: "ATTEMPTS",
+        scoreLabelHeader: "SCORE",
+        hintsLabel: "HINTS",
+        missionDataTitle: "MISSION DATA",
+        cliffLabel: "Cliff height:",
+        targetDistLabel: "Cave distance:",
+        gravityLabel: "Mars gravity:",
+        flightLabel: "Flight time:",
+        launchTitle: "LAUNCH CONTROL",
+        velocityLabel: "Initial Velocity (v₀):",
+        velocityHint: "Horizontal launch velocity of cargo",
+        physicsTitle: "PROJECTILE MOTION",
+        formulaNote1: "Horizontal: uniform motion",
+        formulaNote2: "Vertical: free fall",
+        formulaNote3: "Time for h=200m, g=3.71",
+        launchBtnText: "LAUNCH CARGO",
+        resetBtnText: "RESET",
+        hintBtnText: "HINT (-5)",
+        keyLaunch: "Launch",
+        keyPause: "Pause",
+        keyReset: "Reset",
+        keyHint: "Hint",
+        pauseTitle: "PAUSED",
+        pauseSubtitle: "Calculate the projectile motion!",
+        formulaP1: "Horizontal motion (uniform)",
+        formulaP2: "Vertical motion (free fall)",
+        formulaP3: "Flight time",
+        resumeBtnText: "RESUME",
+        scoreStatLabel: "SCORE",
+        attemptsStatLabel: "ATTEMPTS",
+        errorStatLabel: "DEVIATION (m)",
+        analysisTitle: "📊 PROJECTILE MOTION ANALYSIS",
+        flightTimeLabel: "Flight time:",
+        theoreticalLabel: "Theoretical v₀:",
+        actualLabel: "Applied v₀:",
+        landingLabel: "Landing point:",
+        victoryBtnText: "MISSION COMPLETE!",
+        retryBtnText: "TRY AGAIN",
+        briefingLabel1: "Mars Gravity",
+        briefingLabel2: "Cliff Height",
+        briefingLabel3: "Cave Distance",
+        briefingLabel4: "Accuracy Target",
+        footerInfo: "Mars — Valles Marineris | g = 3.71 m/s²",
+        cinematicScene: `
+          <div class="scene-direction">[Mars — 6 months after departure from Earth]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"We found an <span class="ice">ice cave</span> — perfect shelter for the base. But it's at the base of a <span class="emphasis">200-meter</span> cliff."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"The cave is <span class="emphasis">350 meters</span> horizontally from the edge. You need to launch the supplies with the right velocity."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker patel">DR. PATEL:</span>
+            <span class="scene-text">"We have supplies for <span class="emphasis">one attempt</span>. If you miss, we lose them forever."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker player">YOU:</span>
+            <span class="scene-text">"x = v₀·t, y = ½gt²... With g = 3.71 m/s² on Mars, the flight time is..."</span>
+          </div>
+        `,
+        dialogueReady: "Projectile motion: horizontal motion is <span class='highlight'>independent</span> of vertical!",
+        dialogueFlying: "Cargo flying! The parabolic trajectory is beautiful...",
+        dialogueSuccess: "Perfect drop! The supplies landed in the cave!",
+        dialogueFail: "Supplies missed the target! Lost forever...",
+        dialogueClose: "Close! A bit more accurate calculation next time.",
+        dialogueHint: "Hint: t = √(2h/g) ≈ 10.4s. So v₀ = d/t ≈ 350/10.4 ≈ 33.7 m/s",
+        resultGold: "PERFECT DROP!",
+        resultSilver: "GOOD DROP!",
+        resultBronze: "SUCCESSFUL DROP",
+        resultFail: "DROP FAILED",
+        endSuccess: `
+          <div class="scene-direction">[Ice Cave — Supplies landed]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"Impact successful. Supplies are in the cave. That was... remarkably accurate."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Calculator... Alex... without you, we'd be dead three times over. Physics saved our lives."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker patel">DR. PATEL:</span>
+            <span class="scene-text">"I owe you two meals now. You'll get them when we build the base."</span>
+          </div>
+        `,
+        endFail: `
+          <div class="scene-direction">[Cliff — Supplies lost]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"Supplies did not reach the target. Status: destroyed."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker patel">DR. PATEL:</span>
+            <span class="scene-text">"Those were our only supplies... we'll have to find another solution."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Try again. Physics is the same. Only the calculations change."</span>
+          </div>
+        `
+      },
+      it: {
+        langLabel: "SELEZIONA LINGUA",
+        introTitle: "LANCIO CARGO MARTE",
+        headerTitle: "MARS CARGO DROP",
+        startBtnText: "INIZIA MISSIONE",
+        backText: "INDIETRO",
+        attemptsLabel: "TENTATIVI",
+        scoreLabelHeader: "PUNTEGGIO",
+        hintsLabel: "HINTS",
+        missionDataTitle: "DATI MISSIONE",
+        cliffLabel: "Altezza scogliera:",
+        targetDistLabel: "Distanza grotta:",
+        gravityLabel: "Gravità Marte:",
+        flightLabel: "Tempo di volo:",
+        launchTitle: "CONTROLLO LANCIO",
+        velocityLabel: "Velocità Iniziale (v₀):",
+        velocityHint: "Velocità orizzontale di lancio del cargo",
+        physicsTitle: "MOTO PARABOLICO",
+        formulaNote1: "Orizzontale: moto uniforme",
+        formulaNote2: "Verticale: caduta libera",
+        formulaNote3: "Tempo per h=200m, g=3.71",
+        launchBtnText: "LANCIA CARGO",
+        resetBtnText: "RESETTA",
+        hintBtnText: "SUGGERIMENTO (-5)",
+        keyLaunch: "Lancia",
+        keyPause: "Pausa",
+        keyReset: "Resetta",
+        keyHint: "Sugger.",
+        pauseTitle: "PAUSA",
+        pauseSubtitle: "Calcola il moto parabolico!",
+        formulaP1: "Moto orizzontale (uniforme)",
+        formulaP2: "Moto verticale (caduta libera)",
+        formulaP3: "Tempo di volo",
+        resumeBtnText: "RIPRENDI",
+        scoreStatLabel: "PUNTEGGIO",
+        attemptsStatLabel: "TENTATIVI",
+        errorStatLabel: "DEVIAZIONE (m)",
+        analysisTitle: "📊 ANALISI MOTO PARABOLICO",
+        flightTimeLabel: "Tempo di volo:",
+        theoreticalLabel: "v₀ teorico:",
+        actualLabel: "v₀ applicato:",
+        landingLabel: "Punto di atterraggio:",
+        victoryBtnText: "MISSIONE COMPLETATA!",
+        retryBtnText: "RIPROVA",
+        briefingLabel1: "Gravità Marte",
+        briefingLabel2: "Altezza Scogliera",
+        briefingLabel3: "Distanza Grotta",
+        briefingLabel4: "Precisione Target",
+        footerInfo: "Marte — Valles Marineris | g = 3.71 m/s²",
+        cinematicScene: `
+          <div class="scene-direction">[Marte — 6 mesi dopo la partenza dalla Terra]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Abbiamo trovato una <span class="ice">grotta di ghiaccio</span> — rifugio perfetto per la base. Ma è alla base di una scogliera di <span class="emphasis">200 metri</span>."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"La grotta è a <span class="emphasis">350 metri</span> orizzontalmente dal bordo. Devi lanciare i rifornimenti con la velocità giusta."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker patel">DR. PATEL:</span>
+            <span class="scene-text">"Abbiamo rifornimenti per <span class="emphasis">un tentativo</span>. Se manchi, li perdiamo per sempre."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker player">TU:</span>
+            <span class="scene-text">"x = v₀·t, y = ½gt²... Con g = 3.71 m/s² su Marte, il tempo di volo è..."</span>
+          </div>
+        `,
+        dialogueReady: "Moto parabolico: il moto orizzontale è <span class='highlight'>indipendente</span> da quello verticale!",
+        dialogueFlying: "Cargo in volo! La traiettoria parabolica è bellissima...",
+        dialogueSuccess: "Lancio perfetto! I rifornimenti sono nella grotta!",
+        dialogueFail: "Rifornimenti mancati! Persi per sempre...",
+        dialogueClose: "Quasi! Calcolo un po' più preciso la prossima volta.",
+        dialogueHint: "Suggerimento: t = √(2h/g) ≈ 10.4s. Quindi v₀ = d/t ≈ 350/10.4 ≈ 33.7 m/s",
+        resultGold: "LANCIO PERFETTO!",
+        resultSilver: "BUON LANCIO!",
+        resultBronze: "LANCIO RIUSCITO",
+        resultFail: "LANCIO FALLITO",
+        endSuccess: `
+          <div class="scene-direction">[Grotta di Ghiaccio — Rifornimenti atterrati]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"Impatto riuscito. I rifornimenti sono nella grotta. È stato... notevolmente preciso."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Calculator... Alex... senza di te, saremmo morti tre volte. La fisica ci ha salvato la vita."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker patel">DR. PATEL:</span>
+            <span class="scene-text">"Ti devo due pasti ora. Li avrai quando costruiremo la base."</span>
+          </div>
+        `,
+        endFail: `
+          <div class="scene-direction">[Scogliera — Rifornimenti persi]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"I rifornimenti non hanno raggiunto il bersaglio. Stato: distrutti."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker patel">DR. PATEL:</span>
+            <span class="scene-text">"Quelli erano i nostri unici rifornimenti... dovremo trovare un'altra soluzione."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Riprova. La fisica è la stessa. Solo i calcoli cambiano."</span>
+          </div>
+        `
+      }
+    };
+
+    /* ===== STATE ===== */
+    let state = {
+      language: 'el',
+      phase: 'intro',
+      attempts: 0,
+      score: 100,
+      hintsUsed: 0,
+      cargoX: 0,
+      cargoY: 0,
+      cargoVx: 0,
+      cargoVy: 0,
+      time: 0,
+      initialVelocity: 0,
+      landingX: 0,
+      success: false,
+      trail: [], // Store positions for drawing path AFTER dropping
+      GRAVITY: 3.71,
+      CLIFF_HEIGHT: 200,
+      TARGET_DISTANCE: 350,
+      TARGET_WIDTH: 20,
+      PPM: 2
+    };
+
+    const $ = id => document.getElementById(id);
+    const $$ = sel => document.querySelectorAll(sel);
+    const canvas = $('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function t(key) { return I18N[state.language][key] || I18N.el[key] || key; }
+
+    function setLanguage(lang) {
+      state.language = lang;
+      $$('.lang-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
+      $$('.lang-option').forEach(opt => opt.classList.toggle('active', opt.dataset.lang === lang));
+      updateAllText();
+      localStorage.setItem('atlas_language', lang);
+    }
+
+    function updateAllText() {
+      $('langLabel').textContent = t('langLabel');
+      $('introTitle').textContent = t('introTitle');
+      $('cinematicScene').innerHTML = t('cinematicScene');
+      $('startBtnText').textContent = t('startBtnText');
+      $('briefingLabel1').textContent = t('briefingLabel1');
+      $('briefingLabel2').textContent = t('briefingLabel2');
+      $('briefingLabel3').textContent = t('briefingLabel3');
+      $('briefingLabel4').textContent = t('briefingLabel4');
+      $('headerTitle').textContent = t('headerTitle');
+      $('backText').textContent = t('backText');
+      $('attemptsLabel').textContent = t('attemptsLabel');
+      $('scoreLabelHeader').textContent = t('scoreLabelHeader');
+      $('hintsLabel').textContent = t('hintsLabel');
+      $('missionDataTitle').textContent = t('missionDataTitle');
+      $('cliffLabel').textContent = t('cliffLabel');
+      $('targetDistLabel').textContent = t('targetDistLabel');
+      $('gravityLabel').textContent = t('gravityLabel');
+      $('flightLabel').textContent = t('flightLabel');
+      $('launchTitle').textContent = t('launchTitle');
+      $('velocityLabel').textContent = t('velocityLabel');
+      $('velocityHint').textContent = t('velocityHint');
+      $('physicsTitle').textContent = t('physicsTitle');
+      $('formulaNote1').textContent = t('formulaNote1');
+      $('formulaNote2').textContent = t('formulaNote2');
+      $('formulaNote3').textContent = t('formulaNote3');
+      $('launchBtnText').textContent = t('launchBtnText');
+      $('resetBtnText').textContent = t('resetBtnText');
+      $('hintBtnText').textContent = t('hintBtnText');
+      $('keyLaunch').textContent = t('keyLaunch');
+      $('keyPause').textContent = t('keyPause');
+      $('keyReset').textContent = t('keyReset');
+      $('keyHint').textContent = t('keyHint');
+      $('pauseTitle').textContent = t('pauseTitle');
+      $('pauseSubtitle').textContent = t('pauseSubtitle');
+      $('formulaP1').textContent = t('formulaP1');
+      $('formulaP2').textContent = t('formulaP2');
+      $('formulaP3').textContent = t('formulaP3');
+      $('resumeBtnText').textContent = t('resumeBtnText');
+      $('scoreStatLabel').textContent = t('scoreStatLabel');
+      $('attemptsStatLabel').textContent = t('attemptsStatLabel');
+      $('errorStatLabel').textContent = t('errorStatLabel');
+      $('analysisTitle').textContent = t('analysisTitle');
+      $('flightTimeLabel').textContent = t('flightTimeLabel');
+      $('theoreticalLabel').textContent = t('theoreticalLabel');
+      $('actualLabel').textContent = t('actualLabel');
+      $('landingLabel').textContent = t('landingLabel');
+      $('victoryBtnText').textContent = t('victoryBtnText');
+      $('retryBtnText').textContent = t('retryBtnText');
+      $('footerInfo').textContent = t('footerInfo');
+      $('dialogueText').innerHTML = t('dialogueReady');
+    }
+
+    function resizeCanvas() {
+      const wrapper = canvas.parentElement;
+      canvas.width = wrapper.clientWidth;
+      canvas.height = wrapper.clientHeight;
+    }
+
+    function render() {
+      const W = canvas.width, H = canvas.height;
+      drawMarsSky(W, H);
+      drawStars(W, H);
+      drawCliff(W, H);
+      drawCave(W, H);
+      drawRover(W, H);
+      drawCargo(W, H);
+      drawTrajectory(W, H);
+      drawInfo(W, H);
+    }
+
+    function drawMarsSky(W, H) {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+      skyGrad.addColorStop(0, '#1a0a0a');
+      skyGrad.addColorStop(0.5, '#2a1515');
+      skyGrad.addColorStop(1, '#3a2020');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    function drawStars(W, H) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      for (let i = 0; i < 50; i++) {
+        const x = (i * 137.5) % W;
+        const y = (i * 73.3) % (H * 0.4);
+        ctx.beginPath();
+        ctx.arc(x, y, Math.random(), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawCliff(W, H) {
+      const cliffX = 50;
+      const cliffTopY = H * 0.3;
+      const groundY = H * 0.9;
+      
+      const cliffGrad = ctx.createLinearGradient(cliffX, 0, cliffX + 100, 0);
+      cliffGrad.addColorStop(0, '#8b4513');
+      cliffGrad.addColorStop(0.5, '#c44536');
+      cliffGrad.addColorStop(1, '#6b1d1d');
+      
+      ctx.fillStyle = cliffGrad;
+      ctx.beginPath();
+      ctx.moveTo(0, cliffTopY);
+      ctx.lineTo(cliffX, cliffTopY);
+      ctx.lineTo(cliffX + 20, cliffTopY + 50);
+      ctx.lineTo(cliffX + 10, groundY);
+      ctx.lineTo(0, groundY);
+      ctx.closePath();
+      ctx.fill();
+      
+      const groundGrad = ctx.createLinearGradient(0, groundY, 0, H);
+      groundGrad.addColorStop(0, '#c44536');
+      groundGrad.addColorStop(1, '#6b1d1d');
+      ctx.fillStyle = groundGrad;
+      ctx.fillRect(0, groundY, W, H - groundY);
+    }
+
+    function drawCave(W, H) {
+      const groundY = H * 0.9;
+      const caveX = 50 + state.TARGET_DISTANCE * state.PPM;
+      const caveWidth = state.TARGET_WIDTH * state.PPM;
+      
+      ctx.fillStyle = '#a8dadc';
+      ctx.shadowColor = '#a8dadc';
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ctx.arc(caveX, groundY, caveWidth / 2, Math.PI, 0);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      
+      ctx.fillStyle = '#1a3a4a';
+      ctx.beginPath();
+      ctx.arc(caveX, groundY, caveWidth / 2 - 5, Math.PI, 0);
+      ctx.fill();
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('🎯 CAVE', caveX, groundY + 20);
+      ctx.textAlign = 'left';
+    }
+
+    function drawRover(W, H) {
+      const roverX = 30;
+      const roverY = H * 0.3 - 20;
+      
+      ctx.fillStyle = '#c49a6c';
+      ctx.fillRect(roverX - 20, roverY, 40, 15);
+      
+      ctx.fillStyle = '#666';
+      ctx.beginPath();
+      ctx.arc(roverX - 12, roverY + 18, 5, 0, Math.PI * 2);
+      ctx.arc(roverX + 12, roverY + 18, 5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(roverX + 15, roverY);
+      ctx.lineTo(roverX + 35, roverY - 15);
+      ctx.stroke();
+    }
+
+    function drawCargo(W, H) {
+      if (state.phase === 'flying' || state.phase === 'landed' || state.phase === 'crashed') {
+        const screenX = 50 + state.cargoX * state.PPM;
+        const screenY = H * 0.3 + state.cargoY * state.PPM;
+        
+        ctx.fillStyle = '#ffd60a';
+        ctx.shadowColor = '#ffd60a';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('📦', screenX, screenY + 4);
+        ctx.textAlign = 'left';
+      }
+    }
+
+    function drawTrajectory(W, H) {
+      // Only draw the trail AFTER cargo has been dropped (during 'flying' or 'ended' phase)
+      // Do NOT show predicted trajectory before dropping - that would give away the answer!
+      if (state.phase === 'flying' || state.phase === 'ended') {
+        if (state.trail && state.trail.length > 1) {
+          ctx.strokeStyle = 'rgba(255, 214, 10, 0.5)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(state.trail[0].x, state.trail[0].y);
+          for (let i = 1; i < state.trail.length; i++) {
+            ctx.lineTo(state.trail[i].x, state.trail[i].y);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+      // When ready, show only a short starting indicator, not the full trajectory
+      if (state.phase === 'ready') {
+        ctx.fillStyle = 'rgba(255, 214, 10, 0.5)';
+        ctx.beginPath();
+        ctx.arc(50, H * 0.3, 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawInfo(W, H) {
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px monospace';
+      
+      ctx.fillText(`h = ${state.CLIFF_HEIGHT}m`, 10, 20);
+      ctx.fillText(`d = ${state.TARGET_DISTANCE}m`, 10, 35);
+      ctx.fillText(`g = ${state.GRAVITY} m/s²`, 10, 50);
+      
+      if (state.phase === 'flying') {
+        ctx.fillText(`t = ${state.time.toFixed(2)}s`, 10, 70);
+        ctx.fillText(`x = ${state.cargoX.toFixed(1)}m`, 10, 85);
+        ctx.fillText(`y = ${state.cargoY.toFixed(1)}m`, 10, 100);
+      }
+    }
+
+    function updatePhysics(dt) {
+      if (state.phase !== 'flying') return;
+      
+      state.time += dt;
+      state.cargoVy += state.GRAVITY * dt;
+      state.cargoX += state.cargoVx * dt;
+      state.cargoY += state.cargoVy * dt;
+      
+      // Record position for trail (every few frames)
+      const canvas = $('gameCanvas');
+      const H = canvas.height;
+      const screenX = 50 + state.cargoX * state.PPM;
+      const screenY = H * 0.3 + state.cargoY * state.PPM;
+      if (state.trail.length === 0 || 
+          Math.abs(screenX - state.trail[state.trail.length-1].x) > 10) {
+        state.trail.push({x: screenX, y: screenY});
+      }
+      
+      $('flightValue').textContent = `${state.time.toFixed(2)} s`;
+      
+      if (state.cargoY >= state.CLIFF_HEIGHT) {
+        state.cargoY = state.CLIFF_HEIGHT;
+        state.landingX = state.cargoX;
+        
+        const error = Math.abs(state.landingX - state.TARGET_DISTANCE);
+        
+        if (error <= state.TARGET_WIDTH / 2) {
+          state.phase = 'landed';
+          state.success = true;
+          $('dialogueText').innerHTML = error < 5 ? t('dialogueSuccess') : t('dialogueClose');
+        } else {
+          state.phase = 'crashed';
+          state.success = false;
+          $('dialogueText').innerHTML = t('dialogueFail');
+        }
+        
+        setTimeout(showEndScreen, 1500);
+      }
+    }
+
+    function startGame() {
+      state.phase = 'ready';
+      $('introModal').classList.add('hidden');
+      $('launchBtn').disabled = false;
+      $('dialogueText').innerHTML = t('dialogueReady');
+    }
+
+    function launchCargo() {
+      if (state.phase !== 'ready') return;
+      
+      state.attempts++;
+      state.initialVelocity = parseInt($('velocitySlider').value);
+      
+      if (state.initialVelocity <= 0) {
+        $('dialogueText').innerHTML = "Χρειάζεσαι ταχύτητα > 0 για να εκτοξεύσεις!";
+        return;
+      }
+      
+      state.cargoX = 0;
+      state.cargoY = 0;
+      state.cargoVx = state.initialVelocity;
+      state.cargoVy = 0;
+      state.time = 0;
+      state.phase = 'flying';
+      
+      $('launchBtn').disabled = true;
+      $('resetBtn').disabled = false;
+      $('attemptsDisplay').textContent = state.attempts;
+      $('dialogueText').innerHTML = t('dialogueFlying');
+    }
+
+    function resetGame() {
+      state.phase = 'ready';
+      state.cargoX = 0;
+      state.cargoY = 0;
+      state.time = 0;
+      state.trail = []; // Clear the trail
+      $('launchBtn').disabled = false;
+      $('flightValue').textContent = '-- s';
+      $('dialogueText').innerHTML = t('dialogueReady');
+    }
+
+    function togglePause() {
+      if (state.phase === 'flying') {
+        state.previousPhase = state.phase;
+        state.phase = 'paused';
+        $('pauseOverlay').classList.add('active');
+      } else if (state.phase === 'paused') {
+        state.phase = state.previousPhase;
+        $('pauseOverlay').classList.remove('active');
+      }
+    }
+
+    function giveHint() {
+      if (state.hintsUsed >= 3) return;
+      state.hintsUsed++;
+      state.score = Math.max(0, state.score - 5);
+      $('hintsDisplay').textContent = state.hintsUsed;
+      $('scoreDisplay').textContent = state.score;
+      $('dialogueText').innerHTML = t('dialogueHint');
+    }
+
+    function showEndScreen() {
+      const error = Math.abs(state.landingX - state.TARGET_DISTANCE);
+      const attemptScore = Math.max(0, 100 - (state.attempts - 1) * 15);
+      const accuracyScore = state.success ? Math.max(0, 100 - error * 5) : 0;
+      const hintPenalty = state.hintsUsed * 5;
+      const finalScore = Math.round(0.7 * attemptScore + 0.3 * accuracyScore - hintPenalty);
+      state.score = Math.max(0, finalScore);
+      
+      let medal, resultClass, resultText;
+      if (!state.success) {
+        medal = '💔'; resultClass = 'fail'; resultText = t('resultFail');
+      } else if (error < 5) {
+        medal = '🥇'; resultClass = 'gold'; resultText = t('resultGold');
+      } else if (error < 10) {
+        medal = '🥈'; resultClass = 'silver'; resultText = t('resultSilver');
+      } else {
+        medal = '🥉'; resultClass = 'bronze'; resultText = t('resultBronze');
+      }
+      
+      $('resultMedal').textContent = medal;
+      $('resultTitle').textContent = resultText;
+      $('resultTitle').className = `result-title ${resultClass}`;
+      $('finalScore').textContent = state.score;
+      $('finalAttempts').textContent = state.attempts;
+      $('finalError').textContent = error.toFixed(1);
+      
+      const theoreticalTime = Math.sqrt(2 * state.CLIFF_HEIGHT / state.GRAVITY);
+      const theoreticalV0 = state.TARGET_DISTANCE / theoreticalTime;
+      
+      $('flightTimeValue').textContent = `${theoreticalTime.toFixed(2)} s`;
+      $('theoreticalV').textContent = `${theoreticalV0.toFixed(1)} m/s`;
+      $('actualV').textContent = `${state.initialVelocity} m/s`;
+      $('landingValue').textContent = `${state.landingX.toFixed(1)} m`;
+      
+      $('endCinematic').innerHTML = state.success ? t('endSuccess') : t('endFail');
+      $('victoryBtn').style.display = state.success ? 'block' : 'none';
+      $('endModal').classList.remove('hidden');
+      
+      saveProgress();
+    }
+
+    function saveProgress() {
+      const error = Math.abs(state.landingX - state.TARGET_DISTANCE);
+      const medal = state.success ? (error < 5 ? 'gold' : error < 10 ? 'silver' : 'bronze') : null;
+      localStorage.setItem('atlas_game3_completed', state.success ? 'true' : 'false');
+      localStorage.setItem('atlas_game3_medal', medal);
+      localStorage.setItem('atlas_game3_score', state.score);
+    }
+
+    function victory() { window.location.href = 'martian_rover.html'; }
+    function retryGame() {
+      $('endModal').classList.add('hidden');
+      state.attempts = 0;
+      state.hintsUsed = 0;
+      state.score = 100;
+      $('attemptsDisplay').textContent = '0';
+      $('hintsDisplay').textContent = '0';
+      $('scoreDisplay').textContent = '100';
+      resetGame();
+    }
+    function goBack() { window.location.href = 'index.html'; }
+
+    function setupSliders() {
+      $('velocitySlider').addEventListener('input', (e) => {
+        $('velocityDisplay').textContent = `${e.target.value} m/s`;
+      });
+    }
+
+    function setupKeyboard() {
+      document.addEventListener('keydown', (e) => {
+        switch(e.code) {
+          case 'Space': case 'Enter': e.preventDefault(); if (state.phase === 'ready') launchCargo(); break;
+          case 'KeyP': togglePause(); break;
+          case 'KeyR': if (state.phase !== 'intro') resetGame(); break;
+          case 'KeyH': giveHint(); break;
+        }
+      });
+    }
+
+    let lastTime = 0;
+    function gameLoop(timestamp) {
+      const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+      lastTime = timestamp;
+      if (state.phase !== 'paused') updatePhysics(dt);
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function init() {
+      const savedLang = localStorage.getItem('atlas_language');
+      if (savedLang) setLanguage(savedLang);
+      
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      setupSliders();
+      setupKeyboard();
+      
+      $('startGameBtn').addEventListener('click', startGame);
+      $('launchBtn').addEventListener('click', launchCargo);
+      $('resetBtn').addEventListener('click', resetGame);
+      $('hintBtn').addEventListener('click', giveHint);
+      $('victoryBtn').addEventListener('click', victory);
+      $('retryBtn').addEventListener('click', retryGame);
+      
+      updateAllText();
+      requestAnimationFrame(gameLoop);
+      console.log('🔴 MARS CARGO DROP initialized');
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
