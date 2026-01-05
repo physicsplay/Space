@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚀 Space Physics Games — Mission ATLAS</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --void-black: #030308;
+      --deep-space: #0a0a1a;
+      --nebula-purple: #1a0a2a;
+      --star-white: #f0f4ff;
+      --gold: #ffd60a;
+      --thrust-orange: #ff6b35;
+      --info-blue: #4361ee;
+      --success-green: #06d6a0;
+      --mars-red: #c44536;
+      --moon-gray: #888899;
+    }
+
+    html, body {
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--void-black) 0%, var(--nebula-purple) 50%, var(--deep-space) 100%);
+      color: var(--star-white);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 3rem 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .logo {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-family: 'Courier New', monospace;
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, var(--gold), var(--thrust-orange));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--moon-gray);
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Language Selector */
+    .lang-selector {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .lang-btn {
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: var(--star-white);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .lang-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .lang-btn.active {
+      background: rgba(255, 214, 10, 0.2);
+      border-color: var(--gold);
+    }
+
+    /* Mission Intro */
+    .mission-intro {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(67, 97, 238, 0.3);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 3rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .mission-intro h2 {
+      color: var(--gold);
+      font-family: 'Courier New', monospace;
+      margin-bottom: 1rem;
+    }
+
+    .mission-intro p {
+      line-height: 1.8;
+      color: #ccc;
+    }
+
+    /* Games Grid */
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .game-card {
+      background: linear-gradient(145deg, rgba(20, 20, 40, 0.9), rgba(10, 10, 30, 0.9));
+      border: 2px solid rgba(67, 97, 238, 0.3);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--gold);
+      box-shadow: 0 10px 40px rgba(255, 214, 10, 0.2);
+    }
+
+    .game-card .act {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: var(--gold);
+      background: rgba(255, 214, 10, 0.1);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .game-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .game-title {
+      font-family: 'Courier New', monospace;
+      font-size: 1.3rem;
+      color: var(--star-white);
+      margin-bottom: 0.5rem;
+    }
+
+    .game-physics {
+      font-size: 0.85rem;
+      color: var(--info-blue);
+      margin-bottom: 0.5rem;
+    }
+
+    .game-desc {
+      font-size: 0.9rem;
+      color: #888;
+      line-height: 1.5;
+    }
+
+    .game-formulas {
+      margin-top: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .formula-tag {
+      background: rgba(67, 97, 238, 0.15);
+      border: 1px solid rgba(67, 97, 238, 0.3);
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      font-family: 'Times New Roman', serif;
+      font-size: 0.8rem;
+      color: var(--info-blue);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--moon-gray);
+      font-size: 0.85rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    footer a {
+      color: var(--info-blue);
+      text-decoration: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1 { font-size: 1.8rem; }
+      .logo { font-size: 3rem; }
+      .games-grid { grid-template-columns: 1fr; }
+      .container { padding: 1rem; }
+    }
+
+    /* Stars animation */
+    .stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+  </style>
+</head>
+<body>
+  <canvas class="stars" id="stars"></canvas>
+  
+  <div class="container">
+    <header>
+      <div class="logo">🚀</div>
+      <h1 id="mainTitle">ΑΠΟΣΤΟΛΗ ATLAS</h1>
+      <p class="subtitle" id="mainSubtitle">Εκπαιδευτικά παιχνίδια Φυσικής στο Διάστημα</p>
+      
+      <div class="lang-selector">
+        <button class="lang-btn active" data-lang="el" onclick="setLang('el')">🇬🇷 Ελληνικά</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">🇬🇧 English</button>
+        <button class="lang-btn" data-lang="it" onclick="setLang('it')">🇮🇹 Italiano</button>
+        <button class="lang-btn" data-lang="es" onclick="setLang('es')">🇪🇸 Español</button>
+        <button class="lang-btn" data-lang="de" onclick="setLang('de')">🇩🇪 Deutsch</button>
+        <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">🇫🇷 Français</button>
+        <button class="lang-btn" data-lang="bg" onclick="setLang('bg')">🇧🇬 Български</button>
+        <button class="lang-btn" data-lang="pt" onclick="setLang('pt')">🇵🇹 Português</button>
+      </div>
+    </header>
+
+    <div class="mission-intro">
+      <h2>📡 <span id="missionTitle">ΚΕΝΤΡΟ ΕΛΕΓΧΟΥ ISA</span></h2>
+      <p id="missionText">
+        Έτος 2157. Το διαστημόπλοιο Prometheus έχει εγκλωβιστεί κοντά στον Ποσειδώνα. 
+        Η μοναδική ελπίδα διάσωσης είναι η αποστολή ATLAS — μια αποστολή που απαιτεί 
+        τέλειους υπολογισμούς φυσικής. Είσαι ο "Calculator", ο επιστήμονας που θα 
+        χρησιμοποιήσει τους νόμους της φυσικής για να σώσει το πλήρωμα.
+      </p>
+    </div>
+
+    <div class="games-grid" id="gamesGrid">
+      <!-- Games will be populated by JavaScript -->
+    </div>
+
+    <footer>
+      <p id="footerText">🎓 Εκπαιδευτικά παιχνίδια Φυσικής για Λύκειο</p>
+      <p style="margin-top: 0.5rem;">
+        <a href="https://github.com/physicsplay/Space" target="_blank">GitHub</a>
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    const I18N = {
+      el: {
+        mainTitle: "ΑΠΟΣΤΟΛΗ ATLAS",
+        mainSubtitle: "Εκπαιδευτικά παιχνίδια Φυσικής στο Διάστημα",
+        missionTitle: "ΚΕΝΤΡΟ ΕΛΕΓΧΟΥ ISA",
+        missionText: "Έτος 2157. Το διαστημόπλοιο Prometheus έχει εγκλωβιστεί κοντά στον Ποσειδώνα. Η μοναδική ελπίδα διάσωσης είναι η αποστολή ATLAS — μια αποστολή που απαιτεί τέλειους υπολογισμούς φυσικής. Είσαι ο \"Calculator\", ο επιστήμονας που θα χρησιμοποιήσει τους νόμους της φυσικής για να σώσει το πλήρωμα.",
+        footerText: "🎓 Εκπαιδευτικά παιχνίδια Φυσικής για Λύκειο"
+      },
+      en: {
+        mainTitle: "MISSION ATLAS",
+        mainSubtitle: "Educational Physics Games in Space",
+        missionTitle: "ISA CONTROL CENTER",
+        missionText: "Year 2157. The spacecraft Prometheus is stranded near Neptune. The only hope for rescue is Mission ATLAS — a mission that requires perfect physics calculations. You are the \"Calculator\", the scientist who will use the laws of physics to save the crew.",
+        footerText: "🎓 Educational Physics Games for High School"
+      },
+      it: {
+        mainTitle: "MISSIONE ATLAS",
+        mainSubtitle: "Giochi Educativi di Fisica nello Spazio",
+        missionTitle: "CENTRO DI CONTROLLO ISA",
+        missionText: "Anno 2157. L'astronave Prometheus è bloccata vicino a Nettuno. L'unica speranza di salvataggio è la Missione ATLAS — una missione che richiede calcoli fisici perfetti. Tu sei il \"Calculator\", lo scienziato che userà le leggi della fisica per salvare l'equipaggio.",
+        footerText: "🎓 Giochi Educativi di Fisica per il Liceo"
+      },
+      es: {
+        mainTitle: "MISIÓN ATLAS",
+        mainSubtitle: "Juegos Educativos de Física en el Espacio",
+        missionTitle: "CENTRO DE CONTROL ISA",
+        missionText: "Año 2157. La nave espacial Prometheus está varada cerca de Neptuno. La única esperanza de rescate es la Misión ATLAS — una misión que requiere cálculos físicos perfectos. Eres el \"Calculator\", el científico que usará las leyes de la física para salvar a la tripulación.",
+        footerText: "🎓 Juegos Educativos de Física para el Instituto"
+      },
+      bg: {
+        mainTitle: "МИСИЯ ATLAS",
+        mainSubtitle: "Образователни игри по Физика в Космоса",
+        missionTitle: "КОНТРОЛЕН ЦЕНТЪР ISA",
+        missionText: "Година 2157. Космическият кораб Прометей е блокиран близо до Нептун. Единствената надежда за спасение е Мисия ATLAS — мисия, която изисква перфектни физични изчисления. Ти си \"Калкулаторът\", учен който ще използва законите на физиката, за да спаси екипажа.",
+        footerText: "🎓 Образователни игри по Физика за Гимназия"
+      },
+      pt: {
+        mainTitle: "MISSÃO ATLAS",
+        mainSubtitle: "Jogos Educativos de Física no Espaço",
+        missionTitle: "CENTRO DE CONTROLE ISA",
+        missionText: "Ano 2157. A nave espacial Prometheus está presa perto de Netuno. A única esperança de resgate é a Missão ATLAS — uma missão que requer cálculos físicos perfeitos. Você é o \"Calculator\", o cientista que usará as leis da física para salvar a tripulação.",
+        footerText: "🎓 Jogos Educativos de Física para o Ensino Médio"
+      },
+      de: {
+        mainTitle: "MISSION ATLAS",
+        mainSubtitle: "Physik-Lernspiele im Weltraum",
+        missionTitle: "ISA KONTROLLZENTRUM",
+        missionText: "Jahr 2157. Das Raumschiff Prometheus ist in der Nähe von Neptun gestrandet. Die einzige Rettungshoffnung ist Mission ATLAS — eine Mission, die perfekte Physikberechnungen erfordert. Du bist der \"Calculator\", der Wissenschaftler, der die Gesetze der Physik nutzen wird, um die Crew zu retten.",
+        footerText: "🎓 Physik-Lernspiele für die Oberstufe"
+      },
+      fr: {
+        mainTitle: "MISSION ATLAS",
+        mainSubtitle: "Jeux Éducatifs de Physique dans l'Espace",
+        missionTitle: "CENTRE DE CONTRÔLE ISA",
+        missionText: "Année 2157. Le vaisseau spatial Prometheus est bloqué près de Neptune. Le seul espoir de sauvetage est la Mission ATLAS — une mission qui nécessite des calculs physiques parfaits. Tu es le \"Calculator\", le scientifique qui utilisera les lois de la physique pour sauver l'équipage.",
+        footerText: "🎓 Jeux Éducatifs de Physique pour le Lycée"
+      }
+    };
+
+    const GAMES = [
+      {
+        id: 'lunar_rescue',
+        file: 'lunar_rescue.html',
+        act: 'ACT 1',
+        icon: '🌑',
+        title: { el: 'Σεληνιακή Διάσωση', en: 'Lunar Rescue', it: 'Salvataggio Lunare', es: 'Rescate Lunar', de: 'Mondrettung', fr: 'Sauvetage Lunaire', bg: 'Лунно Спасяване', pt: 'Resgate Lunar' },
+        physics: { el: 'Βαρύτητα Σελήνης, Κινηματική', en: 'Lunar Gravity, Kinematics', it: 'Gravità Lunare, Cinematica', es: 'Gravedad Lunar, Cinemática', de: 'Mondgravitation, Kinematik', fr: 'Gravité Lunaire, Cinématique', bg: 'Лунна Гравитация, Кинематика', pt: 'Gravidade Lunar, Cinemática' },
+        desc: { el: 'Προσγείωσε την κάψουλα καυσίμου στη Σελήνη.', en: 'Land the fuel capsule on the Moon.', it: 'Fai atterrare la capsula del carburante sulla Luna.', es: 'Aterriza la cápsula de combustible en la Luna.', de: 'Lande die Treibstoffkapsel auf dem Mond.', fr: 'Fais atterrir la capsule de carburant sur la Lune.', bg: 'Кацни капсулата с гориво на Луната.', pt: 'Pouse a cápsula de combustível na Lua.' },
+        formulas: ['v² = v₀² + 2as', 'g = 1.62 m/s²']
+      },
+      {
+        id: 'orbital_rendezvous',
+        file: 'orbital_rendezvous.html',
+        act: 'ACT 2',
+        icon: '🛰️',
+        title: { el: 'Τροχιακή Συνάντηση', en: 'Orbital Rendezvous', it: 'Appuntamento Orbitale', es: 'Encuentro Orbital', de: 'Orbitaltreffen', fr: 'Rendez-vous Orbital', bg: 'Орбитална Среща', pt: 'Encontro Orbital' },
+        physics: { el: 'Νόμοι Kepler, Τροχιές', en: 'Kepler\'s Laws, Orbits', it: 'Leggi di Keplero, Orbite', es: 'Leyes de Kepler, Órbitas', de: 'Keplersche Gesetze, Umlaufbahnen', fr: 'Lois de Kepler, Orbites', bg: 'Закони на Кеплер, Орбити', pt: 'Leis de Kepler, Órbitas' },
+        desc: { el: 'Σύνδεσε το Atlas-7 με τον διαστημικό σταθμό.', en: 'Connect Atlas-7 with the space station.', it: 'Collega Atlas-7 con la stazione spaziale.', es: 'Conecta Atlas-7 con la estación espacial.', de: 'Verbinde Atlas-7 mit der Raumstation.', fr: 'Connecte Atlas-7 avec la station spatiale.', bg: 'Свържи Atlas-7 с космическата станция.', pt: 'Conecte Atlas-7 com a estação espacial.' },
+        formulas: ['T² ∝ r³', 'Δv']
+      },
+      {
+        id: 'mars_cargo_drop',
+        file: 'mars_cargo_drop.html',
+        act: 'ACT 3',
+        icon: '🔴',
+        title: { el: 'Ρίψη Φορτίου στον Άρη', en: 'Mars Cargo Drop', it: 'Lancio Carico su Marte', es: 'Lanzamiento de Carga en Marte', de: 'Mars Frachtabwurf', fr: 'Largage de Cargo sur Mars', bg: 'Пускане на Товар на Марс', pt: 'Lançamento de Carga em Marte' },
+        physics: { el: 'Βολή, Τροχιά', en: 'Projectile, Trajectory', it: 'Proiettile, Traiettoria', es: 'Proyectil, Trayectoria', de: 'Wurfbewegung, Bahn', fr: 'Projectile, Trajectoire', bg: 'Снаряд, Траектория', pt: 'Projétil, Trajetória' },
+        desc: { el: 'Ρίξε τα εφόδια στον στόχο στον Άρη.', en: 'Drop supplies to the target on Mars.', it: 'Lancia i rifornimenti sul bersaglio su Marte.', es: 'Lanza los suministros al objetivo en Marte.', de: 'Wirf Vorräte auf das Ziel auf dem Mars.', fr: 'Largue les provisions sur la cible sur Mars.', bg: 'Пусни доставките на целта на Марс.', pt: 'Lance os suprimentos no alvo em Marte.' },
+        formulas: ['x = v₀t', 'y = ½gt²', 'g = 3.7 m/s²']
+      },
+      {
+        id: 'martian_rover',
+        file: 'martian_rover.html',
+        act: 'ACT 4',
+        icon: '🚗',
+        title: { el: 'Ρόβερ του Άρη', en: 'Martian Rover', it: 'Rover Marziano', es: 'Rover Marciano', de: 'Mars-Rover', fr: 'Rover Martien', bg: 'Марсоход', pt: 'Rover Marciano' },
+        physics: { el: 'Τριβή, Κεκλιμένο Επίπεδο', en: 'Friction, Inclined Plane', it: 'Attrito, Piano Inclinato', es: 'Fricción, Plano Inclinado', de: 'Reibung, Schiefe Ebene', fr: 'Frottement, Plan Incliné', bg: 'Триене, Наклонена Равнина', pt: 'Atrito, Plano Inclinado' },
+        desc: { el: 'Οδήγησε το ρόβερ στο στόχο χωρίς να γλιστρήσει.', en: 'Drive the rover to the target without slipping.', it: 'Guida il rover al bersaglio senza scivolare.', es: 'Conduce el rover al objetivo sin resbalar.', de: 'Fahre den Rover zum Ziel ohne zu rutschen.', fr: 'Conduis le rover vers la cible sans glisser.', bg: 'Карай роувъра до целта без да се плъзга.', pt: 'Dirija o rover até o alvo sem escorregar.' },
+        formulas: ['F = ma', 'f = μN', 'a = g·sinθ - μg·cosθ']
+      },
+      {
+        id: 'power_grid',
+        file: 'power_grid.html',
+        act: 'ACT 5',
+        icon: '⚡',
+        title: { el: 'Ηλεκτρικό Δίκτυο', en: 'Power Grid', it: 'Rete Elettrica', es: 'Red Eléctrica', de: 'Stromnetz', fr: 'Réseau Électrique', bg: 'Електрическа Мрежа', pt: 'Rede Elétrica' },
+        physics: { el: 'Νόμος Ohm, Κυκλώματα', en: 'Ohm\'s Law, Circuits', it: 'Legge di Ohm, Circuiti', es: 'Ley de Ohm, Circuitos', de: 'Ohmsches Gesetz, Schaltkreise', fr: 'Loi d\'Ohm, Circuits', bg: 'Закон на Ом, Вериги', pt: 'Lei de Ohm, Circuitos' },
+        desc: { el: 'Επισκεύασε το ηλεκτρικό δίκτυο του σταθμού.', en: 'Repair the station\'s power grid.', it: 'Ripara la rete elettrica della stazione.', es: 'Repara la red eléctrica de la estación.', de: 'Repariere das Stromnetz der Station.', fr: 'Répare le réseau électrique de la station.', bg: 'Поправи електрическата мрежа на станцията.', pt: 'Repare a rede elétrica da estação.' },
+        formulas: ['V = IR', 'P = VI', 'R = R₁ + R₂']
+      },
+      {
+        id: 'asteroid_deflection',
+        file: 'asteroid_deflection.html',
+        act: 'ACT 7',
+        icon: '☄️',
+        title: { el: 'Εκτροπή Αστεροειδή', en: 'Asteroid Deflection', it: 'Deviazione Asteroide', es: 'Desviación de Asteroide', de: 'Asteroidenablenkung', fr: 'Déviation d\'Astéroïde', bg: 'Отклоняване на Астероид', pt: 'Desvio de Asteroide' },
+        physics: { el: 'Ορμή, Κρούσεις', en: 'Momentum, Collisions', it: 'Quantità di Moto, Urti', es: 'Momento, Colisiones', de: 'Impuls, Kollisionen', fr: 'Quantité de Mouvement, Collisions', bg: 'Импулс, Сблъсъци', pt: 'Momento, Colisões' },
+        desc: { el: 'Εκτρέψε τον αστεροειδή πριν χτυπήσει τον σταθμό.', en: 'Deflect the asteroid before it hits the station.', it: 'Devia l\'asteroide prima che colpisca la stazione.', es: 'Desvía el asteroide antes de que golpee la estación.', de: 'Lenke den Asteroiden ab bevor er die Station trifft.', fr: 'Dévie l\'astéroïde avant qu\'il ne frappe la station.', bg: 'Отклони астероида преди да удари станцията.', pt: 'Desvie o asteroide antes que atinja a estação.' },
+        formulas: ['p = mv', 'Δp = FΔt']
+      },
+      {
+        id: 'gravity_assist',
+        file: 'gravity_assist.html',
+        act: 'ACT 8',
+        icon: '🪐',
+        title: { el: 'Βαρυτική Σφεντόνα', en: 'Gravity Assist', it: 'Fionda Gravitazionale', es: 'Asistencia Gravitacional', de: 'Schwerkraftschleuder', fr: 'Assistance Gravitationnelle', bg: 'Гравитационна Прашка', pt: 'Assistência Gravitacional' },
+        physics: { el: 'Βαρύτητα, Ενέργεια', en: 'Gravity, Energy', it: 'Gravità, Energia', es: 'Gravedad, Energía', de: 'Gravitation, Energie', fr: 'Gravité, Énergie', bg: 'Гравитация, Енергия', pt: 'Gravidade, Energia' },
+        desc: { el: 'Χρησιμοποίησε τη βαρύτητα του πλανήτη για επιτάχυνση.', en: 'Use the planet\'s gravity for acceleration.', it: 'Usa la gravità del pianeta per accelerare.', es: 'Usa la gravedad del planeta para acelerar.', de: 'Nutze die Gravitation des Planeten zur Beschleunigung.', fr: 'Utilise la gravité de la planète pour accélérer.', bg: 'Използвай гравитацията на планетата за ускорение.', pt: 'Use a gravidade do planeta para acelerar.' },
+        formulas: ['Δv', 'E = ½mv²']
+      },
+      {
+        id: 'aerobraking',
+        file: 'aerobraking.html',
+        act: 'ACT 9',
+        icon: '🌍',
+        title: { el: 'Αεροπέδηση', en: 'Aerobraking', it: 'Aerofrenata', es: 'Aerofrenado', de: 'Aerobraking', fr: 'Aérofreinage', bg: 'Аеродинамично Спиране', pt: 'Aerofrenagem' },
+        physics: { el: 'Ατμόσφαιρα, Θερμότητα', en: 'Atmosphere, Heat', it: 'Atmosfera, Calore', es: 'Atmósfera, Calor', de: 'Atmosphäre, Wärme', fr: 'Atmosphère, Chaleur', bg: 'Атмосфера, Топлина', pt: 'Atmosfera, Calor' },
+        desc: { el: 'Μπες στην ατμόσφαιρα με τη σωστή γωνία.', en: 'Enter the atmosphere at the correct angle.', it: 'Entra nell\'atmosfera con l\'angolo corretto.', es: 'Entra en la atmósfera con el ángulo correcto.', de: 'Tritt in die Atmosphäre im richtigen Winkel ein.', fr: 'Entre dans l\'atmosphère au bon angle.', bg: 'Влез в атмосферата под правилния ъгъл.', pt: 'Entre na atmosfera no ângulo correto.' },
+        formulas: ['θ = 6° - 8°', 'F_drag']
+      },
+      {
+        id: 'titan_sonar',
+        file: 'titan_sonar.html',
+        act: 'BONUS',
+        icon: '🎵',
+        title: { el: 'Σόναρ στον Τιτάνα', en: 'Titan Sonar', it: 'Sonar su Titano', es: 'Sonar en Titán', de: 'Titan Sonar', fr: 'Sonar sur Titan', bg: 'Сонар на Титан', pt: 'Sonar em Titã' },
+        physics: { el: 'Κύματα, Ήχος', en: 'Waves, Sound', it: 'Onde, Suono', es: 'Ondas, Sonido', de: 'Wellen, Schall', fr: 'Ondes, Son', bg: 'Вълни, Звук', pt: 'Ondas, Som' },
+        desc: { el: 'Χρησιμοποίησε ηχητικά κύματα για εξερεύνηση.', en: 'Use sound waves for exploration.', it: 'Usa onde sonore per l\'esplorazione.', es: 'Usa ondas sonoras para exploración.', de: 'Nutze Schallwellen zur Erkundung.', fr: 'Utilise des ondes sonores pour l\'exploration.', bg: 'Използвай звукови вълни за изследване.', pt: 'Use ondas sonoras para exploração.' },
+        formulas: ['v = λf', 'd = vt/2']
+      }
+    ];
+
+    let currentLang = 'el';
+
+    function setLang(lang) {
+      currentLang = lang;
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+      updateText();
+      renderGames();
+    }
+
+    function updateText() {
+      const t = I18N[currentLang];
+      document.getElementById('mainTitle').textContent = t.mainTitle;
+      document.getElementById('mainSubtitle').textContent = t.mainSubtitle;
+      document.getElementById('missionTitle').textContent = t.missionTitle;
+      document.getElementById('missionText').textContent = t.missionText;
+      document.getElementById('footerText').textContent = t.footerText;
+    }
+
+    function renderGames() {
+      const grid = document.getElementById('gamesGrid');
+      grid.innerHTML = GAMES.map(game => `
+        <a href="${game.file}?lang=${currentLang}" class="game-card">
+          <span class="act">${game.act}</span>
+          <div class="game-icon">${game.icon}</div>
+          <h3 class="game-title">${game.title[currentLang]}</h3>
+          <div class="game-physics">${game.physics[currentLang]}</div>
+          <p class="game-desc">${game.desc[currentLang]}</p>
+          <div class="game-formulas">
+            ${game.formulas.map(f => `<span class="formula-tag">${f}</span>`).join('')}
+          </div>
+        </a>
+      `).join('');
+    }
+
+    // Stars background
+    function initStars() {
+      const canvas = document.getElementById('stars');
+      const ctx = canvas.getContext('2d');
+      
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      
+      const stars = Array.from({length: 200}, () => ({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        r: Math.random() * 1.5,
+        a: Math.random()
+      }));
+      
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        stars.forEach(s => {
+          s.a += 0.01;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.sin(s.a) * 0.3})`;
+          ctx.fill();
+        });
+        requestAnimationFrame(draw);
+      }
+      
+      resize();
+      window.addEventListener('resize', resize);
+      draw();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initStars();
+      renderGames();
+    });
+  </script>
+</body>
+</html>
