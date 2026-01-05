@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚗 MARTIAN ROVER — Mission ATLAS Act 4</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --void-black: #030308;
+      --mars-sky: #1a0808;
+      --mars-red: #c44536;
+      --mars-orange: #e07020;
+      --mars-dark: #6b1d1d;
+      --star-white: #f0f4ff;
+      --success-green: #06d6a0;
+      --warning-red: #e63946;
+      --gold: #ffd60a;
+      --silver: #c0c0c0;
+      --bronze: #cd7f32;
+      --moon-gray: #888899;
+      --font-display: 'Courier New', monospace;
+      --font-body: 'Segoe UI', system-ui, sans-serif;
+      --space-xs: 0.25rem; --space-sm: 0.5rem; --space-md: 1rem; --space-lg: 2rem; --space-xl: 3rem;
+      --glow-gold: 0 0 20px rgba(255, 214, 10, 0.5);
+      --glow-red: 0 0 20px rgba(230, 57, 70, 0.5);
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: var(--font-body); background: var(--void-black); color: var(--star-white); }
+    .game-container { display: grid; grid-template-columns: 1fr 350px; grid-template-rows: auto 1fr auto; height: 100vh; }
+    @media (max-width: 900px) { .game-container { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; } }
+    
+    .header { grid-column: 1 / -1; background: linear-gradient(180deg, rgba(26, 8, 8, 0.95), rgba(26, 8, 8, 0.8)); padding: var(--space-sm) var(--space-md); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 100; }
+    .header-left { display: flex; align-items: center; gap: var(--space-md); }
+    .back-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: var(--space-sm) var(--space-md); color: var(--star-white); cursor: pointer; transition: all 0.3s; }
+    .back-btn:hover { background: rgba(255,255,255,0.2); }
+    .game-title { font-family: var(--font-display); font-size: 1.2rem; letter-spacing: 0.1em; }
+    .game-title .act { color: var(--gold); font-size: 0.8rem; }
+    .header-center { display: flex; gap: var(--space-lg); }
+    .stat-box { text-align: center; }
+    .stat-value { font-family: var(--font-display); font-size: 1.3rem; font-weight: bold; }
+    .stat-value.attempts { color: var(--mars-red); }
+    .stat-value.score { color: var(--gold); }
+    .stat-label { font-size: 0.7rem; color: var(--moon-gray); text-transform: uppercase; }
+    .header-right { display: flex; gap: var(--space-sm); }
+    .lang-btn { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; padding: var(--space-xs) var(--space-sm); font-size: 1rem; cursor: pointer; transition: all 0.3s; }
+    .lang-btn:hover, .lang-btn.active { background: rgba(255,214,10,0.2); border-color: var(--gold); }
+    
+    .canvas-wrapper { position: relative; background: var(--mars-sky); overflow: hidden; }
+    #gameCanvas { display: block; width: 100%; height: 100%; }
+    
+    .control-panel { background: linear-gradient(180deg, rgba(40,15,15,0.98), rgba(20,8,8,0.98)); padding: var(--space-md); overflow-y: auto; border-left: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: var(--space-md); }
+    @media (max-width: 900px) { .control-panel { border-left: none; border-top: 1px solid rgba(255,255,255,0.1); max-height: 40vh; } }
+    
+    .panel-section { background: rgba(0,0,0,0.3); border-radius: 12px; padding: var(--space-md); border: 1px solid rgba(255,255,255,0.1); }
+    .section-title { font-family: var(--font-display); font-size: 0.85rem; color: var(--gold); margin-bottom: var(--space-sm); display: flex; align-items: center; gap: var(--space-sm); }
+    .data-row { display: flex; justify-content: space-between; padding: var(--space-xs) 0; font-size: 0.85rem; }
+    .data-label { color: var(--moon-gray); }
+    .data-value { font-family: var(--font-display); color: var(--star-white); }
+    .data-value.warning { color: var(--warning-red); }
+    .data-value.success { color: var(--success-green); }
+    .data-value.mars { color: var(--mars-orange); }
+    
+    .slider-group { margin-bottom: var(--space-md); }
+    .slider-header { display: flex; justify-content: space-between; margin-bottom: var(--space-xs); }
+    .slider-label { font-size: 0.85rem; color: var(--moon-gray); }
+    .slider-value { font-family: var(--font-display); font-size: 0.9rem; color: var(--mars-orange); }
+    .slider { width: 100%; height: 8px; -webkit-appearance: none; background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #c44536, #e63946); cursor: pointer; box-shadow: var(--glow-red); }
+    
+    .formula-box { background: rgba(196,69,54,0.15); border: 1px solid rgba(196,69,54,0.3); border-radius: 8px; padding: var(--space-sm); margin-bottom: var(--space-sm); }
+    .formula { font-family: var(--font-display); font-size: 0.9rem; color: var(--mars-orange); text-align: center; }
+    .formula-note { font-size: 0.75rem; color: var(--moon-gray); text-align: center; margin-top: var(--space-xs); }
+    
+    .btn-group { display: flex; flex-direction: column; gap: var(--space-sm); }
+    .btn { padding: var(--space-md); border: none; border-radius: 10px; font-family: var(--font-display); font-size: 1rem; cursor: pointer; transition: all 0.3s; text-transform: uppercase; }
+    .btn-primary { background: linear-gradient(135deg, #c44536, #e63946); color: white; }
+    .btn-primary:hover:not(:disabled) { transform: scale(1.02); box-shadow: var(--glow-red); }
+    .btn-primary:disabled { background: rgba(255,255,255,0.1); color: var(--moon-gray); cursor: not-allowed; }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: var(--star-white); border: 1px solid rgba(255,255,255,0.2); }
+    .btn-hint { background: rgba(255,214,10,0.2); color: var(--gold); border: 1px solid rgba(255,214,10,0.3); }
+    
+    .dialogue-box { background: rgba(0,0,0,0.5); border-left: 3px solid var(--mars-red); padding: var(--space-sm); font-size: 0.85rem; min-height: 60px; }
+    .dialogue-speaker { color: var(--mars-red); font-weight: bold; font-size: 0.75rem; margin-bottom: var(--space-xs); }
+    .dialogue-text .highlight { color: var(--gold); }
+    .dialogue-text .danger { color: var(--warning-red); font-weight: bold; }
+    
+    .footer { grid-column: 1 / -1; background: rgba(26,8,8,0.95); padding: var(--space-sm) var(--space-md); display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--moon-gray); border-top: 1px solid rgba(255,255,255,0.1); }
+    .controls-hint { display: flex; gap: var(--space-md); }
+    .key { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: var(--font-display); font-size: 0.75rem; }
+    
+    /* Modal styles */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: var(--space-lg); }
+    .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+    .modal { max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; background: linear-gradient(135deg, rgba(26,10,10,0.98), rgba(46,15,15,0.98)); border: 2px solid var(--gold); border-radius: 20px; padding: var(--space-xl); }
+    .modal-title { font-family: var(--font-display); font-size: 1.8rem; text-align: center; margin-bottom: var(--space-md); background: linear-gradient(135deg, #ffd700, #ffaa00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    
+    .lang-selector-intro { display: flex; justify-content: center; gap: var(--space-md); margin-bottom: var(--space-lg); padding: var(--space-md); background: rgba(0,0,0,0.3); border-radius: 12px; }
+    .lang-option { display: flex; flex-direction: column; align-items: center; gap: var(--space-xs); padding: var(--space-md); background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.2); border-radius: 12px; cursor: pointer; transition: all 0.3s; min-width: 100px; }
+    .lang-option:hover { background: rgba(255,214,10,0.1); border-color: rgba(255,214,10,0.5); transform: translateY(-3px); }
+    .lang-option.active { background: rgba(255,214,10,0.2); border-color: var(--gold); box-shadow: var(--glow-gold); }
+    .lang-flag { font-size: 2.5rem; }
+    .lang-name { font-size: 0.85rem; color: var(--moon-gray); font-weight: bold; }
+    .lang-option.active .lang-name { color: var(--gold); }
+    .lang-label { text-align: center; font-size: 0.9rem; color: var(--moon-gray); margin-bottom: var(--space-sm); text-transform: uppercase; letter-spacing: 0.1em; }
+    
+    .cinematic-scene { background: rgba(0,0,0,0.5); border-radius: 12px; padding: var(--space-lg); margin-bottom: var(--space-lg); font-family: var(--font-display); font-size: 0.9rem; line-height: 1.8; }
+    .scene-direction { color: var(--moon-gray); font-style: italic; margin-bottom: var(--space-sm); }
+    .scene-dialogue { margin-bottom: var(--space-md); }
+    .scene-speaker { font-weight: bold; }
+    .scene-speaker.vega { color: #e63946; }
+    .scene-speaker.newton { color: #a8dadc; }
+    .scene-speaker.marcus { color: #ff9f1c; }
+    .scene-speaker.player { color: var(--gold); }
+    .scene-text { color: var(--star-white); margin-left: var(--space-md); }
+    .scene-text .emphasis { color: var(--gold); font-weight: bold; }
+    .scene-text .danger { color: var(--warning-red); }
+    
+    .briefing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-md); margin-bottom: var(--space-lg); }
+    @media (max-width: 500px) { .briefing-grid { grid-template-columns: 1fr; } .lang-selector-intro { flex-wrap: wrap; } .lang-option { min-width: 80px; padding: var(--space-sm); } .lang-flag { font-size: 2rem; } }
+    .briefing-item { background: rgba(0,0,0,0.3); border-radius: 10px; padding: var(--space-md); text-align: center; }
+    .briefing-icon { font-size: 2rem; margin-bottom: var(--space-sm); }
+    .briefing-label { font-size: 0.75rem; color: var(--moon-gray); margin-bottom: var(--space-xs); }
+    .briefing-value { font-family: var(--font-display); font-size: 1.1rem; color: var(--mars-orange); }
+    
+    .modal-btn { display: block; width: 100%; padding: var(--space-md); background: linear-gradient(135deg, #ffd700, #ffaa00); border: none; border-radius: 12px; font-family: var(--font-display); font-size: 1.1rem; color: var(--void-black); cursor: pointer; transition: all 0.3s; text-transform: uppercase; letter-spacing: 0.1em; }
+    .modal-btn:hover { transform: scale(1.02); box-shadow: var(--glow-gold); }
+    .modal-btn.secondary { background: rgba(255,255,255,0.1); color: var(--star-white); margin-top: var(--space-sm); }
+    
+    .result-display { text-align: center; margin-bottom: var(--space-lg); }
+    .result-medal { font-size: 5rem; margin-bottom: var(--space-md); }
+    .result-title { font-family: var(--font-display); font-size: 1.5rem; }
+    .result-title.gold { color: var(--gold); }
+    .result-title.silver { color: var(--silver); }
+    .result-title.bronze { color: var(--bronze); }
+    .result-title.fail { color: var(--warning-red); }
+    .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); margin-bottom: var(--space-lg); }
+    .result-stat { background: rgba(0,0,0,0.3); border-radius: 10px; padding: var(--space-md); text-align: center; }
+    .result-stat-value { font-family: var(--font-display); font-size: 1.5rem; color: var(--gold); }
+    .result-stat-label { font-size: 0.75rem; color: var(--moon-gray); }
+    
+    .analysis-section { background: rgba(196,69,54,0.1); border: 1px solid rgba(196,69,54,0.3); border-radius: 12px; padding: var(--space-md); margin-bottom: var(--space-lg); }
+    .analysis-title { font-size: 0.9rem; color: var(--mars-orange); margin-bottom: var(--space-sm); }
+    .analysis-row { display: flex; justify-content: space-between; padding: var(--space-xs) 0; font-size: 0.85rem; }
+    .analysis-label { color: var(--moon-gray); }
+    .analysis-value { font-family: var(--font-display); }
+    .analysis-value.good { color: var(--success-green); }
+    .analysis-value.error { color: var(--warning-red); }
+    
+    .pause-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 500; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .pause-overlay.active { opacity: 1; pointer-events: all; }
+    .pause-content { text-align: center; padding: var(--space-xl); }
+    .pause-title { font-family: var(--font-display); font-size: 2rem; color: var(--gold); margin-bottom: var(--space-md); }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <!-- INTRO MODAL -->
+  <div class="modal-overlay" id="introModal">
+    <div class="modal">
+      <h1 class="modal-title">🚗 <span id="introTitle">ΑΡΕΙΑΝΟ ROVER</span></h1>
+      <div class="lang-label">ΕΠΙΛΕΞΤΕ ΓΛΩΣΣΑ / SELECT LANGUAGE / SELEZIONA LINGUA</div>
+      <div class="lang-selector-intro">
+        <div class="lang-option active" data-lang="el" onclick="setLanguage('el')"><span class="lang-flag">🇬🇷</span><span class="lang-name">Ελληνικά</span></div>
+        <div class="lang-option" data-lang="en" onclick="setLanguage('en')"><span class="lang-flag">🇬🇧</span><span class="lang-name">English</span></div>
+        <div class="lang-option" data-lang="it" onclick="setLanguage('it')"><span class="lang-flag">🇮🇹</span><span class="lang-name">Italiano</span></div>
+        <div class="lang-option" data-lang="es" onclick="setLanguage('es')"><span class="lang-flag">🇪🇸</span><span class="lang-name">Español</span></div>
+        <div class="lang-option" data-lang="bg" onclick="setLanguage('bg')"><span class="lang-flag">🇧🇬</span><span class="lang-name">Български</span></div>
+        <div class="lang-option" data-lang="pt" onclick="setLanguage('pt')"><span class="lang-flag">🇵🇹</span><span class="lang-name">Português</span></div>
+        <div class="lang-option" data-lang="de" onclick="setLanguage('de')"><span class="lang-flag">🇩🇪</span><span class="lang-name">Deutsch</span></div>
+        <div class="lang-option" data-lang="fr" onclick="setLanguage('fr')"><span class="lang-flag">🇫🇷</span><span class="lang-name">Français</span></div>
+      </div>
+      <div class="cinematic-scene" id="cinematicScene"></div>
+      <div class="briefing-grid">
+        <div class="briefing-item"><div class="briefing-icon">⛰️</div><div class="briefing-label" id="briefingLabel1">Γωνία Κλίσης</div><div class="briefing-value">θ = 15° - 45°</div></div>
+        <div class="briefing-item"><div class="briefing-icon">🚗</div><div class="briefing-label" id="briefingLabel2">Μάζα Rover</div><div class="briefing-value">m = 400 kg</div></div>
+        <div class="briefing-item"><div class="briefing-icon">🔴</div><div class="briefing-label" id="briefingLabel3">Βαρύτητα Άρη</div><div class="briefing-value">g = 3.71 m/s²</div></div>
+        <div class="briefing-item"><div class="briefing-icon">🎯</div><div class="briefing-label" id="briefingLabel4">Συντελεστής Τριβής</div><div class="briefing-value">μ = 0.4 - 0.8</div></div>
+      </div>
+      <button class="modal-btn" id="startGameBtn">🚗 <span id="startBtnText">ΕΝΑΡΞΗ ΑΠΟΣΤΟΛΗΣ</span></button>
+    </div>
+  </div>
+
+  <!-- PAUSE OVERLAY -->
+  <div class="pause-overlay" id="pauseOverlay">
+    <div class="pause-content">
+      <h2 class="pause-title">⏸️ <span id="pauseTitle">ΠΑΥΣΗ</span></h2>
+      <p id="pauseSubtitle">Υπολόγισε τις δυνάμεις!</p>
+      <div class="formula-box" style="margin: var(--space-lg) 0;">
+        <div class="formula">F∥ = mg·sinθ</div>
+        <div class="formula-note" id="formulaP1">Συνιστώσα βάρους παράλληλη στο επίπεδο</div>
+      </div>
+      <div class="formula-box">
+        <div class="formula">f_max = μ·N = μ·mg·cosθ</div>
+        <div class="formula-note" id="formulaP2">Μέγιστη στατική τριβή</div>
+      </div>
+      <div class="formula-box">
+        <div class="formula">Αν F∥ > f_max → Ολίσθηση!</div>
+        <div class="formula-note" id="formulaP3">Συνθήκη ολίσθησης: tanθ > μ</div>
+      </div>
+      <button class="btn btn-primary" onclick="togglePause()" style="margin-top: var(--space-lg);">▶️ <span id="resumeBtnText">ΣΥΝΕΧΕΙΑ</span></button>
+    </div>
+  </div>
+
+  <!-- END MODAL -->
+  <div class="modal-overlay hidden" id="endModal">
+    <div class="modal">
+      <div class="result-display">
+        <div class="result-medal" id="resultMedal">🥇</div>
+        <h2 class="result-title" id="resultTitle">ΕΠΙΤΥΧΙΑ!</h2>
+      </div>
+      <div class="cinematic-scene" id="endCinematic"></div>
+      <div class="result-stats">
+        <div class="result-stat"><div class="result-stat-value" id="finalScore">100</div><div class="result-stat-label" id="scoreStatLabel">ΒΑΘΜΟΣ</div></div>
+        <div class="result-stat"><div class="result-stat-value" id="finalAttempts">1</div><div class="result-stat-label" id="attemptsStatLabel">ΠΡΟΣΠΑΘΕΙΕΣ</div></div>
+        <div class="result-stat"><div class="result-stat-value" id="finalAngle">25°</div><div class="result-stat-label" id="angleStatLabel">ΓΩΝΙΑ</div></div>
+      </div>
+      <div class="analysis-section">
+        <div class="analysis-title" id="analysisTitle">📊 ΑΝΑΛΥΣΗ ΔΥΝΑΜΕΩΝ</div>
+        <div class="analysis-row"><span class="analysis-label" id="parallelLabel">Παράλληλη δύναμη (F∥):</span><span class="analysis-value" id="parallelValue">--</span></div>
+        <div class="analysis-row"><span class="analysis-label" id="frictionLabel">Μέγιστη τριβή (f_max):</span><span class="analysis-value" id="frictionValue">--</span></div>
+        <div class="analysis-row"><span class="analysis-label" id="resultLabel">Αποτέλεσμα:</span><span class="analysis-value" id="resultValue">--</span></div>
+      </div>
+      <button class="modal-btn" id="nextMissionBtn">🛡️ <span id="nextBtnText">ΕΠΟΜΕΝΗ ΑΠΟΣΤΟΛΗ</span></button>
+      <button class="modal-btn secondary" id="retryBtn">↺ <span id="retryBtnText">ΔΟΚΙΜΑΣΕ ΞΑΝΑ</span></button>
+    </div>
+  </div>
+
+  <!-- MAIN GAME -->
+  <div class="game-container">
+    <header class="header">
+      <div class="header-left">
+        <button class="back-btn" onclick="goBack()">← <span id="backText">ΠΙΣΩ</span></button>
+        <div class="game-title"><div class="act">ACT 4</div><span id="headerTitle">MARTIAN ROVER</span></div>
+      </div>
+      <div class="header-center">
+        <div class="stat-box"><div class="stat-value attempts" id="attemptsDisplay">0</div><div class="stat-label" id="attemptsLabel">ΠΡΟΣΠΑΘΕΙΕΣ</div></div>
+        <div class="stat-box"><div class="stat-value score" id="scoreDisplay">100</div><div class="stat-label" id="scoreLabelHeader">ΒΑΘΜΟΣ</div></div>
+      </div>
+      <div class="header-right">
+        <button class="lang-btn active" data-lang="el" onclick="setLanguage('el')">🇬🇷</button>
+        <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧</button>
+        <button class="lang-btn" data-lang="it" onclick="setLanguage('it')">🇮🇹</button>
+        <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">🇪🇸</button>
+        <button class="lang-btn" data-lang="bg" onclick="setLanguage('bg')">🇧🇬</button>
+        <button class="lang-btn" data-lang="pt" onclick="setLanguage('pt')">🇵🇹</button>
+        <button class="lang-btn" data-lang="de" onclick="setLanguage('de')">🇩🇪</button>
+        <button class="lang-btn" data-lang="fr" onclick="setLanguage('fr')">🇫🇷</button>
+      </div>
+    </header>
+
+    <div class="canvas-wrapper"><canvas id="gameCanvas"></canvas></div>
+
+    <div class="control-panel">
+      <div class="panel-section">
+        <div class="section-title"><span>📡</span><span id="missionDataTitle">ΔΕΔΟΜΕΝΑ ΑΠΟΣΤΟΛΗΣ</span></div>
+        <div class="data-row"><span class="data-label" id="massLabel">Μάζα rover:</span><span class="data-value mars">400 kg</span></div>
+        <div class="data-row"><span class="data-label" id="gravityLabel">Βαρύτητα:</span><span class="data-value mars">3.71 m/s²</span></div>
+        <div class="data-row"><span class="data-label" id="weightLabel">Βάρος:</span><span class="data-value" id="weightValue">1484 N</span></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title"><span>⛰️</span><span id="slopeTitle">ΠΑΡΑΜΕΤΡΟΙ ΠΛΑΓΙΑΣ</span></div>
+        <div class="slider-group">
+          <div class="slider-header"><span class="slider-label" id="angleLabel">Γωνία κλίσης (θ):</span><span class="slider-value" id="angleDisplay">35°</span></div>
+          <input type="range" class="slider" id="angleSlider" min="10" max="50" value="35" step="1">
+        </div>
+        <div class="slider-group">
+          <div class="slider-header"><span class="slider-label" id="muLabel">Συντελεστής τριβής (μ):</span><span class="slider-value" id="muDisplay">0.50</span></div>
+          <input type="range" class="slider" id="muSlider" min="30" max="80" value="50" step="1">
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title"><span>📐</span><span id="physicsTitle">ΦΥΣΙΚΗ ΚΕΚΛΙΜΕΝΟΥ ΕΠΙΠΕΔΟΥ</span></div>
+        <div class="formula-box"><div class="formula">F∥ = mg·sinθ</div><div class="formula-note" id="formulaNote1">Συνιστώσα βάρους ↓ πλαγιά</div></div>
+        <div class="formula-box"><div class="formula">f = μ·mg·cosθ</div><div class="formula-note" id="formulaNote2">Τριβή (αντίσταση)</div></div>
+        <div class="formula-box"><div class="formula">tanθ > μ → Ολίσθηση!</div><div class="formula-note" id="formulaNote3">Κρίσιμη συνθήκη</div></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="btn-group">
+          <button class="btn btn-primary" id="testBtn">🚗 <span id="testBtnText">ΔΟΚΙΜΗ ΑΝΑΒΑΣΗΣ</span></button>
+          <button class="btn btn-secondary" id="resetBtn">↺ <span id="resetBtnText">ΕΠΑΝΑΦΟΡΑ</span></button>
+          <button class="btn btn-hint" id="hintBtn">💡 <span id="hintBtnText">ΥΠΟΔΕΙΞΗ (-5)</span></button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="dialogue-box">
+          <div class="dialogue-speaker" id="dialogueSpeaker">NEWTON:</div>
+          <div class="dialogue-text" id="dialogueText">Όταν tanθ ξεπεράσει το μ, το rover θα <span class="danger">γλιστρήσει</span>!</div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="controls-hint">
+        <span><span class="key">SPACE</span> <span id="keyTest">Δοκιμή</span></span>
+        <span><span class="key">P</span> <span id="keyPause">Παύση</span></span>
+        <span><span class="key">R</span> <span id="keyReset">Επαναφορά</span></span>
+      </div>
+      <div id="footerInfo">Άρης — Olympus Mons | g = 3.71 m/s²</div>
+    </footer>
+  </div>
+
+  <script>
+    const I18N = {
+      el: {
+        introTitle: "ΑΡΕΙΑΝΟ ROVER",
+        headerTitle: "MARTIAN ROVER",
+        startBtnText: "ΕΝΑΡΞΗ ΑΠΟΣΤΟΛΗΣ",
+        backText: "ΠΙΣΩ",
+        attemptsLabel: "ΠΡΟΣΠΑΘΕΙΕΣ",
+        scoreLabelHeader: "ΒΑΘΜΟΣ",
+        missionDataTitle: "ΔΕΔΟΜΕΝΑ ΑΠΟΣΤΟΛΗΣ",
+        massLabel: "Μάζα rover:",
+        gravityLabel: "Βαρύτητα:",
+        weightLabel: "Βάρος:",
+        slopeTitle: "ΠΑΡΑΜΕΤΡΟΙ ΠΛΑΓΙΑΣ",
+        angleLabel: "Γωνία κλίσης (θ):",
+        muLabel: "Συντελεστής τριβής (μ):",
+        physicsTitle: "ΦΥΣΙΚΗ ΚΕΚΛΙΜΕΝΟΥ ΕΠΙΠΕΔΟΥ",
+        formulaNote1: "Συνιστώσα βάρους ↓ πλαγιά",
+        formulaNote2: "Τριβή (αντίσταση)",
+        formulaNote3: "Κρίσιμη συνθήκη",
+        testBtnText: "ΔΟΚΙΜΗ ΑΝΑΒΑΣΗΣ",
+        resetBtnText: "ΕΠΑΝΑΦΟΡΑ",
+        hintBtnText: "ΥΠΟΔΕΙΞΗ (-5)",
+        keyTest: "Δοκιμή",
+        keyPause: "Παύση",
+        keyReset: "Επαναφορά",
+        pauseTitle: "ΠΑΥΣΗ",
+        pauseSubtitle: "Υπολόγισε τις δυνάμεις!",
+        formulaP1: "Συνιστώσα βάρους παράλληλη στο επίπεδο",
+        formulaP2: "Μέγιστη στατική τριβή",
+        formulaP3: "Συνθήκη ολίσθησης: tanθ > μ",
+        resumeBtnText: "ΣΥΝΕΧΕΙΑ",
+        scoreStatLabel: "ΒΑΘΜΟΣ",
+        attemptsStatLabel: "ΠΡΟΣΠΑΘΕΙΕΣ",
+        angleStatLabel: "ΓΩΝΙΑ",
+        analysisTitle: "📊 ΑΝΑΛΥΣΗ ΔΥΝΑΜΕΩΝ",
+        parallelLabel: "Παράλληλη δύναμη (F∥):",
+        frictionLabel: "Μέγιστη τριβή (f_max):",
+        resultLabel: "Αποτέλεσμα:",
+        nextBtnText: "ΕΠΟΜΕΝΗ ΑΠΟΣΤΟΛΗ",
+        retryBtnText: "ΔΟΚΙΜΑΣΕ ΞΑΝΑ",
+        briefingLabel1: "Γωνία Κλίσης",
+        briefingLabel2: "Μάζα Rover",
+        briefingLabel3: "Βαρύτητα Άρη",
+        briefingLabel4: "Συντελεστής Τριβής",
+        footerInfo: "Άρης — Olympus Mons | g = 3.71 m/s²",
+        cinematicScene: `
+          <div class="scene-direction">[Άρης — Βάση του Olympus Mons]</div>
+          <div class="scene-dialogue"><span class="scene-speaker vega">COMMANDER VEGA:</span><span class="scene-text">"Η σπηλιά πάγου είναι στην κορυφή αυτής της πλαγιάς. Το rover πρέπει να ανεβεί χωρίς να <span class="danger">γλιστρήσει</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Το κρίσιμο ερώτημα: είναι η <span class="emphasis">τριβή αρκετή</span> για να συγκρατήσει το rover στην πλαγιά;"</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker marcus">MARCUS:</span><span class="scene-text">"Αν γλιστρήσει... χάνουμε το rover και τα εφόδια μαζί του."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker player">ΕΣΥ:</span><span class="scene-text">"F∥ = mg·sinθ, f = μ·mg·cosθ... Αν tanθ < μ, θα τα καταφέρουμε!"</span></div>
+        `,
+        dialogueReady: "Όταν tanθ ξεπεράσει το μ, το rover θα <span class='danger'>γλιστρήσει</span>!",
+        dialogueClimbing: "Το rover ανεβαίνει... η τριβή το συγκρατεί!",
+        dialogueSuccess: "Τέλεια! Η τριβή ήταν αρκετή. Το rover έφτασε στην κορυφή!",
+        dialogueSlipping: "Ολίσθηση! Η γωνία ήταν πολύ μεγάλη για αυτόν τον συντελεστή τριβής!",
+        dialogueHint: "Υπόδειξη: Για να μην γλιστρήσει, πρέπει tanθ ≤ μ, δηλαδή θ ≤ arctan(μ)",
+        resultGold: "ΑΨΟΓΗ ΑΝΑΒΑΣΗ!",
+        resultSilver: "ΚΑΛΗ ΔΟΥΛΕΙΑ!",
+        resultBronze: "ΕΠΙΤΥΧΗΣ ΑΝΑΒΑΣΗ",
+        resultFail: "ΟΛΙΣΘΗΣΗ!",
+        slipping: "Γλίστρησε!",
+        climbing: "Ανεβαίνει!",
+        endSuccess: `
+          <div class="scene-direction">[Κορυφή πλαγιάς — Rover ασφαλές]</div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Εξαιρετικός υπολογισμός! Η τριβή νίκησε τη βαρύτητα."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker vega">COMMANDER VEGA:</span><span class="scene-text">"Τα εφόδια είναι ασφαλή. Calculator, πάλι τα κατάφερες!"</span></div>
+        `,
+        endFail: `
+          <div class="scene-direction">[Πλαγιά — Το rover γλιστράει]</div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"tanθ > μ... η ολίσθηση ήταν αναπόφευκτη."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker marcus">MARCUS:</span><span class="scene-text">"Χρειαζόμαστε μεγαλύτερο συντελεστή τριβής ή μικρότερη γωνία!"</span></div>
+        `
+      },
+      en: {
+        introTitle: "MARTIAN ROVER",
+        headerTitle: "MARTIAN ROVER",
+        startBtnText: "START MISSION",
+        backText: "BACK",
+        attemptsLabel: "ATTEMPTS",
+        scoreLabelHeader: "SCORE",
+        missionDataTitle: "MISSION DATA",
+        massLabel: "Rover mass:",
+        gravityLabel: "Gravity:",
+        weightLabel: "Weight:",
+        slopeTitle: "SLOPE PARAMETERS",
+        angleLabel: "Incline angle (θ):",
+        muLabel: "Friction coefficient (μ):",
+        physicsTitle: "INCLINED PLANE PHYSICS",
+        formulaNote1: "Weight component ↓ slope",
+        formulaNote2: "Friction (resistance)",
+        formulaNote3: "Critical condition",
+        testBtnText: "TEST CLIMB",
+        resetBtnText: "RESET",
+        hintBtnText: "HINT (-5)",
+        keyTest: "Test",
+        keyPause: "Pause",
+        keyReset: "Reset",
+        pauseTitle: "PAUSED",
+        pauseSubtitle: "Calculate the forces!",
+        formulaP1: "Weight component parallel to plane",
+        formulaP2: "Maximum static friction",
+        formulaP3: "Slip condition: tanθ > μ",
+        resumeBtnText: "RESUME",
+        scoreStatLabel: "SCORE",
+        attemptsStatLabel: "ATTEMPTS",
+        angleStatLabel: "ANGLE",
+        analysisTitle: "📊 FORCE ANALYSIS",
+        parallelLabel: "Parallel force (F∥):",
+        frictionLabel: "Max friction (f_max):",
+        resultLabel: "Result:",
+        nextBtnText: "NEXT MISSION",
+        retryBtnText: "TRY AGAIN",
+        briefingLabel1: "Incline Angle",
+        briefingLabel2: "Rover Mass",
+        briefingLabel3: "Mars Gravity",
+        briefingLabel4: "Friction Coefficient",
+        footerInfo: "Mars — Olympus Mons | g = 3.71 m/s²",
+        cinematicScene: `
+          <div class="scene-direction">[Mars — Base of Olympus Mons]</div>
+          <div class="scene-dialogue"><span class="scene-speaker vega">COMMANDER VEGA:</span><span class="scene-text">"The ice cave is at the top of this slope. The rover must climb without <span class="danger">slipping</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"The critical question: is <span class="emphasis">friction sufficient</span> to hold the rover on the slope?"</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker marcus">MARCUS:</span><span class="scene-text">"If it slips... we lose the rover and the supplies with it."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker player">YOU:</span><span class="scene-text">"F∥ = mg·sinθ, f = μ·mg·cosθ... If tanθ < μ, we'll make it!"</span></div>
+        `,
+        dialogueReady: "When tanθ exceeds μ, the rover will <span class='danger'>slip</span>!",
+        dialogueClimbing: "The rover is climbing... friction is holding it!",
+        dialogueSuccess: "Perfect! Friction was sufficient. The rover reached the top!",
+        dialogueSlipping: "Slipping! The angle was too steep for this friction coefficient!",
+        dialogueHint: "Hint: To prevent slipping, tanθ ≤ μ, i.e., θ ≤ arctan(μ)",
+        resultGold: "PERFECT CLIMB!",
+        resultSilver: "GOOD JOB!",
+        resultBronze: "SUCCESSFUL CLIMB",
+        resultFail: "SLIPPED!",
+        slipping: "Slipping!",
+        climbing: "Climbing!",
+        endSuccess: `
+          <div class="scene-direction">[Slope summit — Rover safe]</div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Excellent calculation! Friction defeated gravity."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker vega">COMMANDER VEGA:</span><span class="scene-text">"Supplies are safe. Calculator, you did it again!"</span></div>
+        `,
+        endFail: `
+          <div class="scene-direction">[Slope — Rover slipping]</div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"tanθ > μ... slipping was inevitable."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker marcus">MARCUS:</span><span class="scene-text">"We need higher friction or a smaller angle!"</span></div>
+        `
+      },
+      it: {
+        introTitle: "ROVER MARZIANO",
+        headerTitle: "MARTIAN ROVER",
+        startBtnText: "INIZIA MISSIONE",
+        backText: "INDIETRO",
+        attemptsLabel: "TENTATIVI",
+        scoreLabelHeader: "PUNTEGGIO",
+        missionDataTitle: "DATI MISSIONE",
+        massLabel: "Massa rover:",
+        gravityLabel: "Gravità:",
+        weightLabel: "Peso:",
+        slopeTitle: "PARAMETRI PENDENZA",
+        angleLabel: "Angolo inclinazione (θ):",
+        muLabel: "Coefficiente attrito (μ):",
+        physicsTitle: "FISICA PIANO INCLINATO",
+        formulaNote1: "Componente peso ↓ pendenza",
+        formulaNote2: "Attrito (resistenza)",
+        formulaNote3: "Condizione critica",
+        testBtnText: "PROVA SALITA",
+        resetBtnText: "RESETTA",
+        hintBtnText: "SUGGERIMENTO (-5)",
+        keyTest: "Prova",
+        keyPause: "Pausa",
+        keyReset: "Resetta",
+        pauseTitle: "PAUSA",
+        pauseSubtitle: "Calcola le forze!",
+        formulaP1: "Componente peso parallela al piano",
+        formulaP2: "Attrito statico massimo",
+        formulaP3: "Condizione scivolamento: tanθ > μ",
+        resumeBtnText: "RIPRENDI",
+        scoreStatLabel: "PUNTEGGIO",
+        attemptsStatLabel: "TENTATIVI",
+        angleStatLabel: "ANGOLO",
+        analysisTitle: "📊 ANALISI FORZE",
+        parallelLabel: "Forza parallela (F∥):",
+        frictionLabel: "Attrito max (f_max):",
+        resultLabel: "Risultato:",
+        nextBtnText: "PROSSIMA MISSIONE",
+        retryBtnText: "RIPROVA",
+        briefingLabel1: "Angolo Inclinazione",
+        briefingLabel2: "Massa Rover",
+        briefingLabel3: "Gravità Marte",
+        briefingLabel4: "Coefficiente Attrito",
+        footerInfo: "Marte — Olympus Mons | g = 3.71 m/s²",
+        cinematicScene: `
+          <div class="scene-direction">[Marte — Base dell'Olympus Mons]</div>
+          <div class="scene-dialogue"><span class="scene-speaker vega">COMMANDER VEGA:</span><span class="scene-text">"La grotta di ghiaccio è in cima a questa pendenza. Il rover deve salire senza <span class="danger">scivolare</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"La domanda critica: l'<span class="emphasis">attrito è sufficiente</span> per tenere il rover sulla pendenza?"</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker marcus">MARCUS:</span><span class="scene-text">"Se scivola... perdiamo il rover e i rifornimenti con esso."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker player">TU:</span><span class="scene-text">"F∥ = mg·sinθ, f = μ·mg·cosθ... Se tanθ < μ, ce la faremo!"</span></div>
+        `,
+        dialogueReady: "Quando tanθ supera μ, il rover <span class='danger'>scivolerà</span>!",
+        dialogueClimbing: "Il rover sta salendo... l'attrito lo tiene!",
+        dialogueSuccess: "Perfetto! L'attrito era sufficiente. Il rover ha raggiunto la cima!",
+        dialogueSlipping: "Scivolamento! L'angolo era troppo ripido per questo coefficiente di attrito!",
+        dialogueHint: "Suggerimento: Per evitare lo scivolamento, tanθ ≤ μ, cioè θ ≤ arctan(μ)",
+        resultGold: "SALITA PERFETTA!",
+        resultSilver: "BUON LAVORO!",
+        resultBronze: "SALITA RIUSCITA",
+        resultFail: "SCIVOLATO!",
+        slipping: "Scivola!",
+        climbing: "Sale!",
+        endSuccess: `
+          <div class="scene-direction">[Cima pendenza — Rover al sicuro]</div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Calcolo eccellente! L'attrito ha sconfitto la gravità."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker vega">COMMANDER VEGA:</span><span class="scene-text">"I rifornimenti sono al sicuro. Calculator, ce l'hai fatta di nuovo!"</span></div>
+        `,
+        endFail: `
+          <div class="scene-direction">[Pendenza — Rover che scivola]</div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"tanθ > μ... lo scivolamento era inevitabile."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker marcus">MARCUS:</span><span class="scene-text">"Serve più attrito o un angolo minore!"</span></div>
+        `
+      }
+    };
+
+    let state = {
+      language: 'el',
+      phase: 'intro',
+      attempts: 0,
+      score: 100,
+      hintsUsed: 0,
+      angle: 35,
+      mu: 0.50,
+      roverX: 50,
+      roverY: 0,
+      isSlipping: false,
+      isClimbing: false,
+      success: false,
+      MASS: 400,
+      GRAVITY: 3.71
+    };
+
+    const $ = id => document.getElementById(id);
+    const canvas = $('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function t(key) { return I18N[state.language][key] || I18N.el[key] || key; }
+
+    function setLanguage(lang) {
+      state.language = lang;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+      document.querySelectorAll('.lang-option').forEach(o => o.classList.toggle('active', o.dataset.lang === lang));
+      updateAllText();
+      localStorage.setItem('atlas_language', lang);
+    }
+
+    function updateAllText() {
+      $('introTitle').textContent = t('introTitle');
+      $('cinematicScene').innerHTML = t('cinematicScene');
+      $('startBtnText').textContent = t('startBtnText');
+      $('briefingLabel1').textContent = t('briefingLabel1');
+      $('briefingLabel2').textContent = t('briefingLabel2');
+      $('briefingLabel3').textContent = t('briefingLabel3');
+      $('briefingLabel4').textContent = t('briefingLabel4');
+      $('headerTitle').textContent = t('headerTitle');
+      $('backText').textContent = t('backText');
+      $('attemptsLabel').textContent = t('attemptsLabel');
+      $('scoreLabelHeader').textContent = t('scoreLabelHeader');
+      $('missionDataTitle').textContent = t('missionDataTitle');
+      $('massLabel').textContent = t('massLabel');
+      $('gravityLabel').textContent = t('gravityLabel');
+      $('weightLabel').textContent = t('weightLabel');
+      $('slopeTitle').textContent = t('slopeTitle');
+      $('angleLabel').textContent = t('angleLabel');
+      $('muLabel').textContent = t('muLabel');
+      $('physicsTitle').textContent = t('physicsTitle');
+      $('formulaNote1').textContent = t('formulaNote1');
+      $('formulaNote2').textContent = t('formulaNote2');
+      $('formulaNote3').textContent = t('formulaNote3');
+      $('testBtnText').textContent = t('testBtnText');
+      $('resetBtnText').textContent = t('resetBtnText');
+      $('hintBtnText').textContent = t('hintBtnText');
+      $('keyTest').textContent = t('keyTest');
+      $('keyPause').textContent = t('keyPause');
+      $('keyReset').textContent = t('keyReset');
+      $('pauseTitle').textContent = t('pauseTitle');
+      $('pauseSubtitle').textContent = t('pauseSubtitle');
+      $('formulaP1').textContent = t('formulaP1');
+      $('formulaP2').textContent = t('formulaP2');
+      $('formulaP3').textContent = t('formulaP3');
+      $('resumeBtnText').textContent = t('resumeBtnText');
+      $('scoreStatLabel').textContent = t('scoreStatLabel');
+      $('attemptsStatLabel').textContent = t('attemptsStatLabel');
+      $('angleStatLabel').textContent = t('angleStatLabel');
+      $('analysisTitle').textContent = t('analysisTitle');
+      $('parallelLabel').textContent = t('parallelLabel');
+      $('frictionLabel').textContent = t('frictionLabel');
+      $('resultLabel').textContent = t('resultLabel');
+      $('nextBtnText').textContent = t('nextBtnText');
+      $('retryBtnText').textContent = t('retryBtnText');
+      $('footerInfo').textContent = t('footerInfo');
+      $('dialogueText').innerHTML = t('dialogueReady');
+    }
+
+    function resizeCanvas() {
+      const wrapper = canvas.parentElement;
+      canvas.width = wrapper.clientWidth;
+      canvas.height = wrapper.clientHeight;
+    }
+
+    function render() {
+      const W = canvas.width, H = canvas.height;
+      drawSky(W, H);
+      drawSlope(W, H);
+      drawRover(W, H);
+      drawForceVectors(W, H);
+      drawInfo(W, H);
+    }
+
+    function drawSky(W, H) {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#1a0808');
+      grad.addColorStop(0.5, '#2a1010');
+      grad.addColorStop(1, '#3a1818');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      for (let i = 0; i < 30; i++) {
+        ctx.beginPath();
+        ctx.arc((i * 137) % W, (i * 73) % (H * 0.4), Math.random(), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawSlope(W, H) {
+      const angleRad = state.angle * Math.PI / 180;
+      const slopeStartX = W * 0.1;
+      const slopeEndX = W * 0.9;
+      const slopeWidth = slopeEndX - slopeStartX;
+      const slopeHeight = slopeWidth * Math.tan(angleRad);
+      const baseY = H * 0.85;
+      
+      const grad = ctx.createLinearGradient(slopeStartX, baseY, slopeEndX, baseY - slopeHeight);
+      grad.addColorStop(0, '#8b4513');
+      grad.addColorStop(0.5, '#c44536');
+      grad.addColorStop(1, '#a03020');
+      
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(slopeStartX, baseY);
+      ctx.lineTo(slopeEndX, baseY - slopeHeight);
+      ctx.lineTo(slopeEndX, baseY);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.strokeStyle = '#6b1d1d';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(slopeStartX, baseY);
+      ctx.lineTo(slopeEndX, baseY - slopeHeight);
+      ctx.stroke();
+      
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText(`θ = ${state.angle}°`, slopeStartX + 50, baseY - 20);
+      ctx.fillText(`μ = ${state.mu.toFixed(2)}`, slopeStartX + 50, baseY - 40);
+      
+      ctx.fillStyle = '#06d6a0';
+      ctx.beginPath();
+      ctx.arc(slopeEndX - 20, baseY - slopeHeight - 10, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('🎯', slopeEndX - 28, baseY - slopeHeight - 5);
+    }
+
+    function drawRover(W, H) {
+      const angleRad = state.angle * Math.PI / 180;
+      const slopeStartX = W * 0.1;
+      const slopeEndX = W * 0.9;
+      const slopeWidth = slopeEndX - slopeStartX;
+      const slopeHeight = slopeWidth * Math.tan(angleRad);
+      const baseY = H * 0.85;
+      
+      const progress = state.roverX / 100;
+      const roverScreenX = slopeStartX + progress * slopeWidth;
+      const roverScreenY = baseY - progress * slopeHeight - 20;
+      
+      ctx.save();
+      ctx.translate(roverScreenX, roverScreenY);
+      ctx.rotate(-angleRad);
+      
+      ctx.fillStyle = state.isSlipping ? '#e63946' : '#c49a6c';
+      ctx.fillRect(-25, -15, 50, 20);
+      
+      ctx.fillStyle = '#666';
+      ctx.beginPath();
+      ctx.arc(-15, 8, 8, 0, Math.PI * 2);
+      ctx.arc(15, 8, 8, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = '#888';
+      ctx.fillRect(-10, -25, 20, 10);
+      
+      ctx.restore();
+      
+      if (state.isClimbing || state.isSlipping) {
+        ctx.fillStyle = state.isSlipping ? '#e63946' : '#06d6a0';
+        ctx.font = 'bold 14px monospace';
+        ctx.fillText(state.isSlipping ? t('slipping') : t('climbing'), roverScreenX - 30, roverScreenY - 40);
+      }
+    }
+
+    function drawForceVectors(W, H) {
+      if (state.phase !== 'ready' && state.phase !== 'testing') return;
+      
+      const angleRad = state.angle * Math.PI / 180;
+      const slopeStartX = W * 0.1;
+      const slopeWidth = (W * 0.9) - slopeStartX;
+      const baseY = H * 0.85;
+      
+      const progress = state.roverX / 100;
+      const roverX = slopeStartX + progress * slopeWidth;
+      const roverY = baseY - progress * slopeWidth * Math.tan(angleRad) - 20;
+      
+      const weight = state.MASS * state.GRAVITY;
+      const Fparallel = weight * Math.sin(angleRad);
+      const Fnormal = weight * Math.cos(angleRad);
+      const friction = state.mu * Fnormal;
+      
+      const scale = 0.05;
+      
+      ctx.strokeStyle = '#e63946';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(roverX, roverY);
+      ctx.lineTo(roverX + Fparallel * scale * Math.cos(angleRad), roverY + Fparallel * scale * Math.sin(angleRad));
+      ctx.stroke();
+      ctx.fillStyle = '#e63946';
+      ctx.font = '12px monospace';
+      ctx.fillText(`F∥=${Fparallel.toFixed(0)}N`, roverX + 40, roverY + 30);
+      
+      if (friction >= Fparallel) {
+        ctx.strokeStyle = '#06d6a0';
+      } else {
+        ctx.strokeStyle = '#ff6b35';
+      }
+      ctx.beginPath();
+      ctx.moveTo(roverX, roverY);
+      ctx.lineTo(roverX - friction * scale * Math.cos(angleRad), roverY - friction * scale * Math.sin(angleRad));
+      ctx.stroke();
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.fillText(`f=${friction.toFixed(0)}N`, roverX - 80, roverY - 20);
+    }
+
+    function drawInfo(W, H) {
+      const angleRad = state.angle * Math.PI / 180;
+      const tanTheta = Math.tan(angleRad);
+      const willSlip = tanTheta > state.mu;
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = '14px monospace';
+      ctx.fillText(`tan(${state.angle}°) = ${tanTheta.toFixed(3)}`, 10, 25);
+      ctx.fillText(`μ = ${state.mu.toFixed(2)}`, 10, 45);
+      ctx.fillStyle = willSlip ? '#e63946' : '#06d6a0';
+      ctx.fillText(willSlip ? 'tanθ > μ → ΟΛΙΣΘΗΣΗ!' : 'tanθ ≤ μ → ΑΣΦΑΛΕΣ', 10, 65);
+    }
+
+    function calculateForces() {
+      const angleRad = state.angle * Math.PI / 180;
+      const weight = state.MASS * state.GRAVITY;
+      const Fparallel = weight * Math.sin(angleRad);
+      const Fnormal = weight * Math.cos(angleRad);
+      const frictionMax = state.mu * Fnormal;
+      return { Fparallel, Fnormal, frictionMax, willSlip: Fparallel > frictionMax };
+    }
+
+    function startGame() {
+      state.phase = 'ready';
+      $('introModal').classList.add('hidden');
+      $('dialogueText').innerHTML = t('dialogueReady');
+    }
+
+    function testClimb() {
+      if (state.phase !== 'ready') return;
+      
+      state.attempts++;
+      $('attemptsDisplay').textContent = state.attempts;
+      state.phase = 'testing';
+      
+      const forces = calculateForces();
+      state.isSlipping = forces.willSlip;
+      state.isClimbing = !forces.willSlip;
+      
+      $('dialogueText').innerHTML = state.isClimbing ? t('dialogueClimbing') : t('dialogueSlipping');
+      
+      if (state.isClimbing) {
+        animateClimb();
+      } else {
+        animateSlip();
+      }
+    }
+
+    function animateClimb() {
+      if (state.roverX < 95) {
+        state.roverX += 2;
+        requestAnimationFrame(animateClimb);
+      } else {
+        state.success = true;
+        state.phase = 'success';
+        $('dialogueText').innerHTML = t('dialogueSuccess');
+        setTimeout(showEndScreen, 1000);
+      }
+    }
+
+    function animateSlip() {
+      if (state.roverX > 5) {
+        state.roverX -= 3;
+        requestAnimationFrame(animateSlip);
+      } else {
+        state.success = false;
+        state.phase = 'failed';
+        setTimeout(showEndScreen, 1000);
+      }
+    }
+
+    function resetGame() {
+      state.phase = 'ready';
+      state.roverX = 50;
+      state.isSlipping = false;
+      state.isClimbing = false;
+      $('dialogueText').innerHTML = t('dialogueReady');
+    }
+
+    function togglePause() {
+      if (state.phase === 'testing') {
+        state.phase = 'paused';
+        $('pauseOverlay').classList.add('active');
+      } else if (state.phase === 'paused') {
+        state.phase = 'testing';
+        $('pauseOverlay').classList.remove('active');
+      }
+    }
+
+    function giveHint() {
+      if (state.hintsUsed >= 3) return;
+      state.hintsUsed++;
+      state.score = Math.max(0, state.score - 5);
+      $('scoreDisplay').textContent = state.score;
+      $('dialogueText').innerHTML = t('dialogueHint');
+    }
+
+    function showEndScreen() {
+      const forces = calculateForces();
+      const attemptScore = Math.max(0, 100 - (state.attempts - 1) * 15);
+      const hintPenalty = state.hintsUsed * 5;
+      state.score = Math.max(0, state.success ? attemptScore - hintPenalty : 0);
+      
+      let medal, resultClass, resultText;
+      if (!state.success) {
+        medal = '💔'; resultClass = 'fail'; resultText = t('resultFail');
+      } else if (state.attempts === 1) {
+        medal = '🥇'; resultClass = 'gold'; resultText = t('resultGold');
+      } else if (state.attempts <= 3) {
+        medal = '🥈'; resultClass = 'silver'; resultText = t('resultSilver');
+      } else {
+        medal = '🥉'; resultClass = 'bronze'; resultText = t('resultBronze');
+      }
+      
+      $('resultMedal').textContent = medal;
+      $('resultTitle').textContent = resultText;
+      $('resultTitle').className = `result-title ${resultClass}`;
+      $('finalScore').textContent = state.score;
+      $('finalAttempts').textContent = state.attempts;
+      $('finalAngle').textContent = `${state.angle}°`;
+      
+      $('parallelValue').textContent = `${forces.Fparallel.toFixed(1)} N`;
+      $('frictionValue').textContent = `${forces.frictionMax.toFixed(1)} N`;
+      $('resultValue').textContent = state.success ? 'f ≥ F∥ ✓' : 'F∥ > f ✗';
+      $('resultValue').className = `analysis-value ${state.success ? 'good' : 'error'}`;
+      
+      $('endCinematic').innerHTML = state.success ? t('endSuccess') : t('endFail');
+      $('nextMissionBtn').style.display = state.success ? 'block' : 'none';
+      $('endModal').classList.remove('hidden');
+      
+      saveProgress();
+    }
+
+    function saveProgress() {
+      localStorage.setItem('atlas_game4_completed', state.success ? 'true' : 'false');
+      localStorage.setItem('atlas_game4_score', state.score);
+    }
+
+    function goToNextMission() { window.location.href = 'power_grid.html'; }
+    function retryGame() {
+      $('endModal').classList.add('hidden');
+      state.attempts = 0;
+      state.hintsUsed = 0;
+      state.score = 100;
+      $('attemptsDisplay').textContent = '0';
+      $('scoreDisplay').textContent = '100';
+      resetGame();
+    }
+    function goBack() { window.location.href = 'index.html'; }
+
+    function setupSliders() {
+      $('angleSlider').addEventListener('input', e => {
+        state.angle = parseInt(e.target.value);
+        $('angleDisplay').textContent = `${state.angle}°`;
+      });
+      $('muSlider').addEventListener('input', e => {
+        state.mu = parseInt(e.target.value) / 100;
+        $('muDisplay').textContent = state.mu.toFixed(2);
+      });
+    }
+
+    function setupKeyboard() {
+      document.addEventListener('keydown', e => {
+        switch(e.code) {
+          case 'Space': case 'Enter': e.preventDefault(); if (state.phase === 'ready') testClimb(); break;
+          case 'KeyP': togglePause(); break;
+          case 'KeyR': if (state.phase !== 'intro') resetGame(); break;
+          case 'KeyH': giveHint(); break;
+        }
+      });
+    }
+
+    function gameLoop() {
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function init() {
+      const savedLang = localStorage.getItem('atlas_language');
+      if (savedLang) setLanguage(savedLang);
+      
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      setupSliders();
+      setupKeyboard();
+      
+      $('startGameBtn').addEventListener('click', startGame);
+      $('testBtn').addEventListener('click', testClimb);
+      $('resetBtn').addEventListener('click', resetGame);
+      $('hintBtn').addEventListener('click', giveHint);
+      $('nextMissionBtn').addEventListener('click', goToNextMission);
+      $('retryBtn').addEventListener('click', retryGame);
+      
+      updateAllText();
+      requestAnimationFrame(gameLoop);
+      console.log('🚗 MARTIAN ROVER initialized');
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
