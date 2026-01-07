@@ -30,7 +30,7 @@ Each game teaches specific physics concepts from the high school curriculum:
 
 ## 🌐 Languages
 
-All games support 8 languages:
+All games support 9 languages:
 - 🇬🇷 Greek (Ελληνικά)
 - 🇬🇧 English
 - 🇮🇹 Italian (Italiano)
