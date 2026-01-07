@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ POWER GRID — Mission ATLAS Act 5</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --void-black: #030308;
+      --electric-blue: #00d4ff;
+      --circuit-green: #39ff14;
+      --warning-red: #e63946;
+      --gold: #ffd60a;
+      --silver: #c0c0c0;
+      --bronze: #cd7f32;
+      --moon-gray: #888899;
+      --panel-dark: #1a1a2e;
+      --success-green: #06d6a0;
+      --font-display: 'Courier New', monospace;
+      --font-body: 'Segoe UI', system-ui, sans-serif;
+      --space-xs: 0.25rem; --space-sm: 0.5rem; --space-md: 1rem; --space-lg: 2rem;
+      --glow-blue: 0 0 20px rgba(0, 212, 255, 0.5);
+      --glow-gold: 0 0 20px rgba(255, 214, 10, 0.5);
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: var(--font-body); background: var(--void-black); color: #f0f4ff; }
+    .game-container { display: grid; grid-template-columns: 1fr 350px; grid-template-rows: auto 1fr auto; height: 100vh; }
+    @media (max-width: 900px) { .game-container { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; } }
+    
+    .header { grid-column: 1 / -1; background: linear-gradient(180deg, rgba(26,26,46,0.95), rgba(10,10,30,0.8)); padding: var(--space-sm) var(--space-md); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,212,255,0.3); }
+    .header-left { display: flex; align-items: center; gap: var(--space-md); }
+    .back-btn { background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: var(--space-sm) var(--space-md); color: var(--electric-blue); cursor: pointer; transition: all 0.3s; }
+    .back-btn:hover { background: rgba(0,212,255,0.2); }
+    .game-title { font-family: var(--font-display); font-size: 1.2rem; }
+    .game-title .act { color: var(--gold); font-size: 0.8rem; }
+    .header-center { display: flex; gap: var(--space-lg); }
+    .stat-box { text-align: center; }
+    .stat-value { font-family: var(--font-display); font-size: 1.3rem; font-weight: bold; }
+    .stat-value.attempts { color: var(--electric-blue); }
+    .stat-value.score { color: var(--gold); }
+    .stat-label { font-size: 0.7rem; color: var(--moon-gray); text-transform: uppercase; }
+    .header-right { display: flex; gap: var(--space-sm); }
+    .lang-btn { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; padding: var(--space-xs) var(--space-sm); font-size: 1rem; cursor: pointer; }
+    .lang-btn:hover, .lang-btn.active { background: rgba(255,214,10,0.2); border-color: var(--gold); }
+    
+    .canvas-wrapper { position: relative; background: var(--panel-dark); overflow: hidden; }
+    #gameCanvas { display: block; width: 100%; height: 100%; }
+    
+    .control-panel { background: linear-gradient(180deg, rgba(26,26,46,0.98), rgba(10,10,30,0.98)); padding: var(--space-md); overflow-y: auto; border-left: 1px solid rgba(0,212,255,0.2); display: flex; flex-direction: column; gap: var(--space-md); }
+    @media (max-width: 900px) { .control-panel { max-height: 40vh; } }
+    
+    .panel-section { background: rgba(0,0,0,0.3); border-radius: 12px; padding: var(--space-md); border: 1px solid rgba(0,212,255,0.2); }
+    .section-title { font-family: var(--font-display); font-size: 0.85rem; color: var(--electric-blue); margin-bottom: var(--space-sm); }
+    .data-row { display: flex; justify-content: space-between; padding: var(--space-xs) 0; font-size: 0.85rem; }
+    .data-label { color: var(--moon-gray); }
+    .data-value { font-family: var(--font-display); }
+    .data-value.success { color: var(--success-green); }
+    .data-value.warning { color: var(--warning-red); }
+    .data-value.electric { color: var(--electric-blue); }
+    
+    .resistor-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-sm); margin-bottom: var(--space-md); }
+    .resistor-btn { background: rgba(0,212,255,0.1); border: 2px solid rgba(0,212,255,0.3); border-radius: 8px; padding: var(--space-sm); text-align: center; cursor: pointer; transition: all 0.3s; font-family: var(--font-display); }
+    .resistor-btn:hover { background: rgba(0,212,255,0.2); transform: scale(1.05); }
+    .resistor-btn.selected { background: rgba(0,212,255,0.3); border-color: var(--electric-blue); box-shadow: var(--glow-blue); }
+    .resistor-value { font-size: 1.2rem; color: var(--electric-blue); }
+    .resistor-label { font-size: 0.7rem; color: var(--moon-gray); }
+    
+    .connection-type { display: flex; gap: var(--space-sm); margin-bottom: var(--space-md); }
+    .conn-btn { flex: 1; padding: var(--space-sm); border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; background: rgba(0,0,0,0.3); color: #fff; cursor: pointer; font-family: var(--font-display); transition: all 0.3s; }
+    .conn-btn.active { border-color: var(--circuit-green); background: rgba(57,255,20,0.2); color: var(--circuit-green); }
+    
+    .formula-box { background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: var(--space-sm); margin-bottom: var(--space-sm); }
+    .formula { font-family: var(--font-display); font-size: 0.9rem; color: var(--electric-blue); text-align: center; }
+    .formula-note { font-size: 0.75rem; color: var(--moon-gray); text-align: center; }
+    
+    .btn { padding: var(--space-md); border: none; border-radius: 10px; font-family: var(--font-display); font-size: 1rem; cursor: pointer; transition: all 0.3s; text-transform: uppercase; width: 100%; margin-bottom: var(--space-sm); }
+    .btn-primary { background: linear-gradient(135deg, #00d4ff, #0099cc); color: #000; }
+    .btn-primary:hover:not(:disabled) { box-shadow: var(--glow-blue); }
+    .btn-primary:disabled { background: rgba(255,255,255,0.1); color: var(--moon-gray); }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+    .btn-hint { background: rgba(255,214,10,0.2); color: var(--gold); border: 1px solid rgba(255,214,10,0.3); }
+    
+    .dialogue-box { background: rgba(0,0,0,0.5); border-left: 3px solid var(--electric-blue); padding: var(--space-sm); font-size: 0.85rem; min-height: 60px; }
+    .dialogue-speaker { color: var(--electric-blue); font-weight: bold; font-size: 0.75rem; }
+    .dialogue-text .highlight { color: var(--gold); }
+    
+    .footer { grid-column: 1 / -1; background: rgba(26,26,46,0.95); padding: var(--space-sm) var(--space-md); display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--moon-gray); border-top: 1px solid rgba(0,212,255,0.2); }
+    .key { background: rgba(0,212,255,0.1); padding: 2px 8px; border-radius: 4px; font-family: var(--font-display); }
+    
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: var(--space-lg); }
+    .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+    .modal { max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; background: linear-gradient(135deg, rgba(26,26,46,0.98), rgba(10,10,30,0.98)); border: 2px solid var(--gold); border-radius: 20px; padding: var(--space-lg); }
+    .modal-title { font-family: var(--font-display); font-size: 1.8rem; text-align: center; margin-bottom: var(--space-md); background: linear-gradient(135deg, #ffd700, #ffaa00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    
+    .lang-selector-intro { display: flex; justify-content: center; gap: var(--space-md); margin-bottom: var(--space-lg); padding: var(--space-md); background: rgba(0,0,0,0.3); border-radius: 12px; }
+    .lang-option { display: flex; flex-direction: column; align-items: center; gap: var(--space-xs); padding: var(--space-md); background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.2); border-radius: 12px; cursor: pointer; transition: all 0.3s; min-width: 100px; }
+    .lang-option:hover { background: rgba(255,214,10,0.1); border-color: rgba(255,214,10,0.5); }
+    .lang-option.active { background: rgba(255,214,10,0.2); border-color: var(--gold); box-shadow: var(--glow-gold); }
+    .lang-flag { font-size: 2.5rem; }
+    .lang-name { font-size: 0.85rem; color: var(--moon-gray); }
+    .lang-option.active .lang-name { color: var(--gold); }
+    
+    .cinematic-scene { background: rgba(0,0,0,0.5); border-radius: 12px; padding: var(--space-lg); margin-bottom: var(--space-lg); font-family: var(--font-display); font-size: 0.9rem; line-height: 1.8; }
+    .scene-speaker { font-weight: bold; }
+    .scene-speaker.tanaka { color: #4ecdc4; }
+    .scene-speaker.newton { color: #a8dadc; }
+    .scene-speaker.player { color: var(--gold); }
+    .scene-text { margin-left: var(--space-md); }
+    .scene-text .emphasis { color: var(--gold); }
+    .scene-text .danger { color: var(--warning-red); }
+    
+    .briefing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-md); margin-bottom: var(--space-lg); }
+    .briefing-item { background: rgba(0,0,0,0.3); border-radius: 10px; padding: var(--space-md); text-align: center; }
+    .briefing-icon { font-size: 2rem; margin-bottom: var(--space-sm); }
+    .briefing-label { font-size: 0.75rem; color: var(--moon-gray); }
+    .briefing-value { font-family: var(--font-display); font-size: 1.1rem; color: var(--electric-blue); }
+    
+    .modal-btn { display: block; width: 100%; padding: var(--space-md); background: linear-gradient(135deg, #ffd700, #ffaa00); border: none; border-radius: 12px; font-family: var(--font-display); font-size: 1.1rem; color: #000; cursor: pointer; text-transform: uppercase; margin-bottom: var(--space-sm); }
+    .modal-btn:hover { box-shadow: var(--glow-gold); }
+    .modal-btn.secondary { background: rgba(255,255,255,0.1); color: #fff; }
+    
+    .result-display { text-align: center; margin-bottom: var(--space-lg); }
+    .result-medal { font-size: 5rem; }
+    .result-title { font-family: var(--font-display); font-size: 1.5rem; }
+    .result-title.gold { color: var(--gold); }
+    .result-title.silver { color: var(--silver); }
+    .result-title.bronze { color: var(--bronze); }
+    .result-title.fail { color: var(--warning-red); }
+    .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); margin-bottom: var(--space-lg); }
+    .result-stat { background: rgba(0,0,0,0.3); border-radius: 10px; padding: var(--space-md); text-align: center; }
+    .result-stat-value { font-family: var(--font-display); font-size: 1.5rem; color: var(--gold); }
+    .result-stat-label { font-size: 0.75rem; color: var(--moon-gray); }
+    
+    .analysis-section { background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; padding: var(--space-md); margin-bottom: var(--space-lg); }
+    .analysis-row { display: flex; justify-content: space-between; padding: var(--space-xs) 0; font-size: 0.85rem; }
+    .analysis-value.good { color: var(--success-green); }
+    .analysis-value.error { color: var(--warning-red); }
+    
+    .hidden { display: none !important; }
+    @media (max-width: 500px) { .briefing-grid { grid-template-columns: 1fr; } .lang-selector-intro { flex-wrap: wrap; } }
+  </style>
+</head>
+<body>
+  <div class="modal-overlay" id="introModal">
+    <div class="modal">
+      <h1 class="modal-title">⚡ <span id="introTitle">ΗΛΕΚΤΡΙΚΟ ΔΙΚΤΥΟ</span></h1>
+      <div class="lang-selector-intro">
+        <div class="lang-option" data-lang="el" onclick="setLanguage('el')"><span class="lang-flag">🇬🇷</span><span class="lang-name">Ελληνικά</span></div>
+        <div class="lang-option active" data-lang="en" onclick="setLanguage('en')"><span class="lang-flag">🇬🇧</span><span class="lang-name">English</span></div>
+        <div class="lang-option" data-lang="it" onclick="setLanguage('it')"><span class="lang-flag">🇮🇹</span><span class="lang-name">Italiano</span></div>
+        <div class="lang-option" data-lang="es" onclick="setLanguage('es')"><span class="lang-flag">🇪🇸</span><span class="lang-name">Español</span></div>
+        <div class="lang-option" data-lang="bg" onclick="setLanguage('bg')"><span class="lang-flag">🇧🇬</span><span class="lang-name">Български</span></div>
+        <div class="lang-option" data-lang="pt" onclick="setLanguage('pt')"><span class="lang-flag">🇵🇹</span><span class="lang-name">Português</span></div>
+        <div class="lang-option" data-lang="de" onclick="setLanguage('de')"><span class="lang-flag">🇩🇪</span><span class="lang-name">Deutsch</span></div>
+        <div class="lang-option" data-lang="fr" onclick="setLanguage('fr')"><span class="lang-flag">🇫🇷</span><span class="lang-name">Français</span></div>
+        <div class="lang-option" data-lang="fi" onclick="setLanguage('fi')"><span class="lang-flag">🇫🇮</span><span class="lang-name">Suomi</span></div>
+      </div>
+      <div class="cinematic-scene" id="cinematicScene"></div>
+      <div class="briefing-grid">
+        <div class="briefing-item"><div class="briefing-icon">🔋</div><div class="briefing-label" id="bl1">Τάση Πηγής</div><div class="briefing-value">V = 24 V</div></div>
+        <div class="briefing-item"><div class="briefing-icon">💡</div><div class="briefing-label" id="bl2">Απαιτούμενο Ρεύμα</div><div class="briefing-value">I = 2 A</div></div>
+        <div class="briefing-item"><div class="briefing-icon">🔌</div><div class="briefing-label" id="bl3">Διαθέσιμες Αντιστάσεις</div><div class="briefing-value">4Ω, 6Ω, 12Ω</div></div>
+        <div class="briefing-item"><div class="briefing-icon">🎯</div><div class="briefing-label" id="bl4">Στόχος</div><div class="briefing-value">R_total = 12Ω</div></div>
+      </div>
+      <button class="modal-btn" id="startGameBtn">⚡ <span id="startBtnText">ΕΝΑΡΞΗ</span></button>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="endModal">
+    <div class="modal">
+      <div class="result-display">
+        <div class="result-medal" id="resultMedal">🥇</div>
+        <h2 class="result-title" id="resultTitle">ΕΠΙΤΥΧΙΑ!</h2>
+      </div>
+      <div class="cinematic-scene" id="endCinematic"></div>
+      <div class="result-stats">
+        <div class="result-stat"><div class="result-stat-value" id="finalScore">100</div><div class="result-stat-label" id="ssl">ΒΑΘΜΟΣ</div></div>
+        <div class="result-stat"><div class="result-stat-value" id="finalAttempts">1</div><div class="result-stat-label" id="asl">ΠΡΟΣΠΑΘΕΙΕΣ</div></div>
+        <div class="result-stat"><div class="result-stat-value" id="finalR">12Ω</div><div class="result-stat-label" id="rsl">ΑΝΤΙΣΤΑΣΗ</div></div>
+      </div>
+      <div class="analysis-section">
+        <div class="analysis-row"><span id="targetLabel">Στόχος:</span><span class="analysis-value" id="targetValue">12Ω</span></div>
+        <div class="analysis-row"><span id="actualLabel">Αποτέλεσμα:</span><span class="analysis-value" id="actualValue">--</span></div>
+        <div class="analysis-row"><span id="currentLabel">Ρεύμα:</span><span class="analysis-value" id="currentValue">--</span></div>
+      </div>
+      <button class="modal-btn" id="nextBtn">🚀 <span id="nextBtnText">ΕΠΟΜΕΝΗ ΑΠΟΣΤΟΛΗ</span></button>
+      <button class="modal-btn secondary" id="retryBtn">↺ <span id="retryBtnText">ΞΑΝΑΔΟΚΙΜΑΣΕ</span></button>
+    </div>
+  </div>
+
+  <div class="game-container">
+    <header class="header">
+      <div class="header-left">
+        <button class="back-btn" onclick="goBack()">← <span id="backText">ΠΙΣΩ</span></button>
+        <div class="game-title"><div class="act">ACT 5</div><span id="headerTitle">POWER GRID</span></div>
+      </div>
+      <div class="header-center">
+        <div class="stat-box"><div class="stat-value attempts" id="attemptsDisplay">0</div><div class="stat-label" id="attemptsLabel">ΠΡΟΣΠΑΘΕΙΕΣ</div></div>
+        <div class="stat-box"><div class="stat-value score" id="scoreDisplay">100</div><div class="stat-label" id="scoreLabel">ΒΑΘΜΟΣ</div></div>
+      </div>
+      <div class="header-right">
+        <button class="lang-btn" data-lang="el" onclick="setLanguage('el')">🇬🇷</button>
+        <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">🇬🇧</button>
+        <button class="lang-btn" data-lang="it" onclick="setLanguage('it')">🇮🇹</button>
+        <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">🇪🇸</button>
+        <button class="lang-btn" data-lang="bg" onclick="setLanguage('bg')">🇧🇬</button>
+        <button class="lang-btn" data-lang="pt" onclick="setLanguage('pt')">🇵🇹</button>
+        <button class="lang-btn" data-lang="de" onclick="setLanguage('de')">🇩🇪</button>
+        <button class="lang-btn" data-lang="fr" onclick="setLanguage('fr')">🇫🇷</button>
+        <button class="lang-btn" data-lang="fi" onclick="setLanguage('fi')">🇫🇮</button>
+      </div>
+    </header>
+
+    <div class="canvas-wrapper"><canvas id="gameCanvas"></canvas></div>
+
+    <div class="control-panel">
+      <div class="panel-section">
+        <div class="section-title">📊 <span id="mdt">ΔΕΔΟΜΕΝΑ ΚΥΚΛΩΜΑΤΟΣ</span></div>
+        <div class="data-row"><span id="voltLabel">Τάση πηγής:</span><span class="data-value electric">24 V</span></div>
+        <div class="data-row"><span id="targetRLabel">Στόχος R:</span><span class="data-value">12 Ω</span></div>
+        <div class="data-row"><span id="currentRLabel">Τρέχον R:</span><span class="data-value electric" id="currentR">0 Ω</span></div>
+        <div class="data-row"><span id="resultILabel">Ρεύμα I:</span><span class="data-value" id="resultI">-- A</span></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">🔌 <span id="selectTitle">ΕΠΙΛΟΓΗ ΑΝΤΙΣΤΑΣΕΩΝ</span></div>
+        <div class="resistor-selector">
+          <div class="resistor-btn" data-r="4" onclick="toggleResistor(4)"><div class="resistor-value">4Ω</div><div class="resistor-label">R₁</div></div>
+          <div class="resistor-btn" data-r="6" onclick="toggleResistor(6)"><div class="resistor-value">6Ω</div><div class="resistor-label">R₂</div></div>
+          <div class="resistor-btn" data-r="12" onclick="toggleResistor(12)"><div class="resistor-value">12Ω</div><div class="resistor-label">R₃</div></div>
+        </div>
+        <div class="connection-type">
+          <button class="conn-btn active" id="seriesBtn" onclick="setConnection('series')"><span id="seriesText">ΣΕΙΡΑ</span></button>
+          <button class="conn-btn" id="parallelBtn" onclick="setConnection('parallel')"><span id="parallelText">ΠΑΡΑΛΛΗΛΑ</span></button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">📐 <span id="physicsTitle">ΝΟΜΟΣ OHM</span></div>
+        <div class="formula-box"><div class="formula">V = I · R</div><div class="formula-note" id="fn1">Νόμος του Ohm</div></div>
+        <div class="formula-box"><div class="formula">R_σειρά = R₁ + R₂ + ...</div><div class="formula-note" id="fn2">Σύνδεση σε σειρά</div></div>
+        <div class="formula-box"><div class="formula">1/R_παρ = 1/R₁ + 1/R₂ + ...</div><div class="formula-note" id="fn3">Παράλληλη σύνδεση</div></div>
+      </div>
+
+      <div class="panel-section">
+        <button class="btn btn-primary" id="testBtn" onclick="testCircuit()">⚡ <span id="testBtnText">ΔΟΚΙΜΗ ΚΥΚΛΩΜΑΤΟΣ</span></button>
+        <button class="btn btn-secondary" onclick="resetCircuit()">↺ <span id="resetBtnText">ΕΠΑΝΑΦΟΡΑ</span></button>
+        <button class="btn btn-hint" onclick="giveHint()">💡 <span id="hintBtnText">ΥΠΟΔΕΙΞΗ (-5)</span></button>
+      </div>
+
+      <div class="panel-section">
+        <div class="dialogue-box">
+          <div class="dialogue-speaker">NEWTON:</div>
+          <div class="dialogue-text" id="dialogueText">Επίλεξε αντιστάσεις και τύπο σύνδεσης για να πετύχεις <span class="highlight">R = 12Ω</span>.</div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div><span class="key">SPACE</span> <span id="kt">Δοκιμή</span> | <span class="key">R</span> <span id="kr">Επαναφορά</span></div>
+      <div id="footerInfo">Βάση Άρη — Ηλεκτρικό Σύστημα</div>
+    </footer>
+  </div>
+
+  <script>
+    const I18N = {
+      el: {
+        introTitle: "ΗΛΕΚΤΡΙΚΟ ΔΙΚΤΥΟ", headerTitle: "POWER GRID", startBtnText: "ΕΝΑΡΞΗ", backText: "ΠΙΣΩ",
+        attemptsLabel: "ΠΡΟΣΠΑΘΕΙΕΣ", scoreLabel: "ΒΑΘΜΟΣ", mdt: "ΔΕΔΟΜΕΝΑ ΚΥΚΛΩΜΑΤΟΣ",
+        voltLabel: "Τάση πηγής:", targetRLabel: "Στόχος R:", currentRLabel: "Τρέχον R:", resultILabel: "Ρεύμα I:",
+        selectTitle: "ΕΠΙΛΟΓΗ ΑΝΤΙΣΤΑΣΕΩΝ", seriesText: "ΣΕΙΡΑ", parallelText: "ΠΑΡΑΛΛΗΛΑ",
+        physicsTitle: "ΝΟΜΟΣ OHM", fn1: "Νόμος του Ohm", fn2: "Σύνδεση σε σειρά", fn3: "Παράλληλη σύνδεση",
+        testBtnText: "ΔΟΚΙΜΗ ΚΥΚΛΩΜΑΤΟΣ", resetBtnText: "ΕΠΑΝΑΦΟΡΑ", hintBtnText: "ΥΠΟΔΕΙΞΗ (-5)",
+        kt: "Δοκιμή", kr: "Επαναφορά", footerInfo: "Βάση Άρη — Ηλεκτρικό Σύστημα",
+        bl1: "Τάση Πηγής", bl2: "Απαιτούμενο Ρεύμα", bl3: "Διαθέσιμες Αντιστάσεις", bl4: "Στόχος",
+        ssl: "ΒΑΘΜΟΣ", asl: "ΠΡΟΣΠΑΘΕΙΕΣ", rsl: "ΑΝΤΙΣΤΑΣΗ",
+        targetLabel: "Στόχος:", actualLabel: "Αποτέλεσμα:", currentLabel: "Ρεύμα:",
+        nextBtnText: "ΕΠΟΜΕΝΗ ΑΠΟΣΤΟΛΗ", retryBtnText: "ΞΑΝΑΔΟΚΙΜΑΣΕ",
+        cinematicScene: `<div class="scene-dialogue"><span class="scene-speaker tanaka">DR. TANAKA:</span><span class="scene-text">"Η αμμοθύελλα κατέστρεψε το ηλεκτρικό σύστημα! Πρέπει να <span class="emphasis">επισκευάσεις το κύκλωμα</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Χρειαζόμαστε ακριβώς <span class="emphasis">2A</span> ρεύμα. Με 24V τάση, χρειάζεσαι <span class="emphasis">R = 12Ω</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker player">ΕΣΥ:</span><span class="scene-text">"V = IR, άρα R = V/I = 24/2 = 12Ω. Ποιον συνδυασμό αντιστάσεων να χρησιμοποιήσω;"</span></div>`,
+        dialogueReady: "Επίλεξε αντιστάσεις και τύπο σύνδεσης για να πετύχεις <span class='highlight'>R = 12Ω</span>.",
+        dialogueSuccess: "Τέλεια! Το κύκλωμα λειτουργεί με ακριβώς 2A!",
+        dialogueFail: "Λάθος αντίσταση! Το ρεύμα δεν είναι σωστό.",
+        dialogueHint: "Θυμήσου: Σε σειρά R = R₁+R₂, παράλληλα 1/R = 1/R₁+1/R₂. Ποιος συνδυασμός δίνει 12Ω;",
+        resultGold: "ΤΕΛΕΙΟ ΚΥΚΛΩΜΑ!", resultSilver: "ΚΑΛΗ ΔΟΥΛΕΙΑ!", resultBronze: "ΕΠΙΤΥΧΙΑ!", resultFail: "ΑΠΟΤΥΧΙΑ!",
+        endSuccess: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Εξαιρετικά! Το κύκλωμα είναι σωστά συνδεδεμένο."</span></div>`,
+        endFail: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Η αντίσταση δεν είναι σωστή. Ξαναϋπολόγισε!"</span></div>`
+      },
+      en: {
+        introTitle: "POWER GRID", headerTitle: "POWER GRID", startBtnText: "START", backText: "BACK",
+        attemptsLabel: "ATTEMPTS", scoreLabel: "SCORE", mdt: "CIRCUIT DATA",
+        voltLabel: "Source voltage:", targetRLabel: "Target R:", currentRLabel: "Current R:", resultILabel: "Current I:",
+        selectTitle: "SELECT RESISTORS", seriesText: "SERIES", parallelText: "PARALLEL",
+        physicsTitle: "OHM'S LAW", fn1: "Ohm's Law", fn2: "Series connection", fn3: "Parallel connection",
+        testBtnText: "TEST CIRCUIT", resetBtnText: "RESET", hintBtnText: "HINT (-5)",
+        kt: "Test", kr: "Reset", footerInfo: "Mars Base — Electrical System",
+        bl1: "Source Voltage", bl2: "Required Current", bl3: "Available Resistors", bl4: "Target",
+        ssl: "SCORE", asl: "ATTEMPTS", rsl: "RESISTANCE",
+        targetLabel: "Target:", actualLabel: "Result:", currentLabel: "Current:",
+        nextBtnText: "NEXT MISSION", retryBtnText: "TRY AGAIN",
+        cinematicScene: `<div class="scene-dialogue"><span class="scene-speaker tanaka">DR. TANAKA:</span><span class="scene-text">"The sandstorm destroyed the electrical system! You need to <span class="emphasis">repair the circuit</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"We need exactly <span class="emphasis">2A</span> current. With 24V voltage, you need <span class="emphasis">R = 12Ω</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker player">YOU:</span><span class="scene-text">"V = IR, so R = V/I = 24/2 = 12Ω. Which resistor combination should I use?"</span></div>`,
+        dialogueReady: "Select resistors and connection type to achieve <span class='highlight'>R = 12Ω</span>.",
+        dialogueSuccess: "Perfect! The circuit works with exactly 2A!",
+        dialogueFail: "Wrong resistance! The current is not correct.",
+        dialogueHint: "Remember: Series R = R₁+R₂, Parallel 1/R = 1/R₁+1/R₂. Which combination gives 12Ω?",
+        resultGold: "PERFECT CIRCUIT!", resultSilver: "GOOD JOB!", resultBronze: "SUCCESS!", resultFail: "FAILED!",
+        endSuccess: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Excellent! The circuit is correctly connected."</span></div>`,
+        endFail: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"The resistance is not correct. Recalculate!"</span></div>`
+      },
+      it: {
+        introTitle: "RETE ELETTRICA", headerTitle: "POWER GRID", startBtnText: "INIZIA", backText: "INDIETRO",
+        attemptsLabel: "TENTATIVI", scoreLabel: "PUNTEGGIO", mdt: "DATI CIRCUITO",
+        voltLabel: "Tensione fonte:", targetRLabel: "R obiettivo:", currentRLabel: "R attuale:", resultILabel: "Corrente I:",
+        selectTitle: "SELEZIONA RESISTORI", seriesText: "SERIE", parallelText: "PARALLELO",
+        physicsTitle: "LEGGE DI OHM", fn1: "Legge di Ohm", fn2: "Collegamento in serie", fn3: "Collegamento parallelo",
+        testBtnText: "PROVA CIRCUITO", resetBtnText: "RESETTA", hintBtnText: "SUGGERIMENTO (-5)",
+        kt: "Prova", kr: "Resetta", footerInfo: "Base Marte — Sistema Elettrico",
+        bl1: "Tensione Fonte", bl2: "Corrente Richiesta", bl3: "Resistori Disponibili", bl4: "Obiettivo",
+        ssl: "PUNTEGGIO", asl: "TENTATIVI", rsl: "RESISTENZA",
+        targetLabel: "Obiettivo:", actualLabel: "Risultato:", currentLabel: "Corrente:",
+        nextBtnText: "PROSSIMA MISSIONE", retryBtnText: "RIPROVA",
+        cinematicScene: `<div class="scene-dialogue"><span class="scene-speaker tanaka">DR. TANAKA:</span><span class="scene-text">"La tempesta di sabbia ha distrutto il sistema elettrico! Devi <span class="emphasis">riparare il circuito</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Abbiamo bisogno di esattamente <span class="emphasis">2A</span> di corrente. Con 24V, serve <span class="emphasis">R = 12Ω</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker player">TU:</span><span class="scene-text">"V = IR, quindi R = V/I = 24/2 = 12Ω. Quale combinazione di resistori devo usare?"</span></div>`,
+        dialogueReady: "Seleziona resistori e tipo di collegamento per ottenere <span class='highlight'>R = 12Ω</span>.",
+        dialogueSuccess: "Perfetto! Il circuito funziona con esattamente 2A!",
+        dialogueFail: "Resistenza sbagliata! La corrente non è corretta.",
+        dialogueHint: "Ricorda: Serie R = R₁+R₂, Parallelo 1/R = 1/R₁+1/R₂. Quale combinazione dà 12Ω?",
+        resultGold: "CIRCUITO PERFETTO!", resultSilver: "BUON LAVORO!", resultBronze: "SUCCESSO!", resultFail: "FALLITO!",
+        endSuccess: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Eccellente! Il circuito è collegato correttamente."</span></div>`,
+        endFail: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"La resistenza non è corretta. Ricalcola!"</span></div>`
+      },
+      es: {
+        introTitle: "RED ELÉCTRICA", headerTitle: "RED ELÉCTRICA", startBtnText: "INICIAR", backText: "ATRÁS",
+        attemptsLabel: "INTENTOS", scoreLabel: "PUNTOS", mdt: "DATOS CIRCUITO",
+        voltLabel: "Voltaje fuente:", targetRLabel: "R objetivo:", currentRLabel: "R actual:", resultILabel: "Corriente I:",
+        selectTitle: "SELECCIONAR RESISTORES", seriesText: "SERIE", parallelText: "PARALELO",
+        physicsTitle: "LEY DE OHM", fn1: "Ley de Ohm", fn2: "Conexión en serie", fn3: "Conexión paralelo",
+        testBtnText: "PROBAR CIRCUITO", resetBtnText: "REINICIAR", hintBtnText: "PISTA (-5)",
+        kt: "Probar", kr: "Reiniciar", footerInfo: "Base Marte — Sistema Eléctrico",
+        bl1: "Voltaje Fuente", bl2: "Corriente Requerida", bl3: "Resistores Disponibles", bl4: "Objetivo",
+        ssl: "PUNTOS", asl: "INTENTOS", rsl: "RESISTENCIA",
+        targetLabel: "Objetivo:", actualLabel: "Resultado:", currentLabel: "Corriente:",
+        nextBtnText: "SIGUIENTE MISIÓN", retryBtnText: "REINTENTAR",
+        cinematicScene: `<div class="scene-dialogue"><span class="scene-speaker tanaka">DRA. TANAKA:</span><span class="scene-text">"¡La tormenta de arena destruyó el sistema eléctrico! Debes <span class="emphasis">reparar el circuito</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Necesitamos exactamente <span class="emphasis">2A</span> de corriente. Con 24V, necesitas <span class="emphasis">R = 12Ω</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker player">TÚ:</span><span class="scene-text">"V = IR, entonces R = V/I = 24/2 = 12Ω. ¿Qué combinación de resistores debo usar?"</span></div>`,
+        dialogueReady: "Selecciona resistores y tipo de conexión para lograr <span class='highlight'>R = 12Ω</span>.",
+        dialogueSuccess: "¡Perfecto! ¡El circuito funciona con exactamente 2A!",
+        dialogueFail: "¡Resistencia incorrecta! La corriente no es correcta.",
+        dialogueHint: "Recuerda: Serie R = R₁+R₂, Paralelo 1/R = 1/R₁+1/R₂. ¿Qué combinación da 12Ω?",
+        resultGold: "¡CIRCUITO PERFECTO!", resultSilver: "¡BUEN TRABAJO!", resultBronze: "¡ÉXITO!", resultFail: "¡FALLIDO!",
+        endSuccess: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"¡Excelente! El circuito está conectado correctamente."</span></div>`,
+        endFail: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"La resistencia no es correcta. ¡Recalcula!"</span></div>`
+      },
+      de: {
+        introTitle: "STROMNETZ", headerTitle: "STROMNETZ", startBtnText: "START", backText: "ZURÜCK",
+        attemptsLabel: "VERSUCHE", scoreLabel: "PUNKTE", mdt: "SCHALTKREISDATEN",
+        voltLabel: "Quellenspannung:", targetRLabel: "Ziel-R:", currentRLabel: "Aktuell-R:", resultILabel: "Strom I:",
+        selectTitle: "WIDERSTÄNDE WÄHLEN", seriesText: "REIHE", parallelText: "PARALLEL",
+        physicsTitle: "OHMSCHES GESETZ", fn1: "Ohmsches Gesetz", fn2: "Reihenschaltung", fn3: "Parallelschaltung",
+        testBtnText: "SCHALTKREIS TESTEN", resetBtnText: "NEUSTART", hintBtnText: "HINWEIS (-5)",
+        kt: "Testen", kr: "Neustart", footerInfo: "Mars-Basis — Elektrosystem",
+        bl1: "Quellenspannung", bl2: "Benötigter Strom", bl3: "Verfügbare Widerstände", bl4: "Ziel",
+        ssl: "PUNKTE", asl: "VERSUCHE", rsl: "WIDERSTAND",
+        targetLabel: "Ziel:", actualLabel: "Ergebnis:", currentLabel: "Strom:",
+        nextBtnText: "NÄCHSTE MISSION", retryBtnText: "NOCHMAL",
+        cinematicScene: `<div class="scene-dialogue"><span class="scene-speaker tanaka">DR. TANAKA:</span><span class="scene-text">"Der Sandsturm hat das Elektrosystem zerstört! Du musst <span class="emphasis">den Schaltkreis reparieren</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Wir brauchen genau <span class="emphasis">2A</span> Strom. Mit 24V brauchst du <span class="emphasis">R = 12Ω</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker player">DU:</span><span class="scene-text">"V = IR, also R = V/I = 24/2 = 12Ω. Welche Widerstandskombination soll ich verwenden?"</span></div>`,
+        dialogueReady: "Wähle Widerstände und Schaltungstyp um <span class='highlight'>R = 12Ω</span> zu erreichen.",
+        dialogueSuccess: "Perfekt! Der Schaltkreis funktioniert mit genau 2A!",
+        dialogueFail: "Falscher Widerstand! Der Strom ist nicht korrekt.",
+        dialogueHint: "Denke dran: Reihe R = R₁+R₂, Parallel 1/R = 1/R₁+1/R₂. Welche Kombination ergibt 12Ω?",
+        resultGold: "PERFEKTER SCHALTKREIS!", resultSilver: "GUTE ARBEIT!", resultBronze: "ERFOLG!", resultFail: "FEHLGESCHLAGEN!",
+        endSuccess: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Ausgezeichnet! Der Schaltkreis ist korrekt verbunden."</span></div>`,
+        endFail: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Der Widerstand ist nicht korrekt. Berechne neu!"</span></div>`
+      },
+      fr: {
+        introTitle: "RÉSEAU ÉLECTRIQUE", headerTitle: "RÉSEAU ÉLECTRIQUE", startBtnText: "DÉMARRER", backText: "RETOUR",
+        attemptsLabel: "ESSAIS", scoreLabel: "SCORE", mdt: "DONNÉES CIRCUIT",
+        voltLabel: "Tension source:", targetRLabel: "R cible:", currentRLabel: "R actuel:", resultILabel: "Courant I:",
+        selectTitle: "SÉLECTIONNER RÉSISTANCES", seriesText: "SÉRIE", parallelText: "PARALLÈLE",
+        physicsTitle: "LOI D'OHM", fn1: "Loi d'Ohm", fn2: "Connexion en série", fn3: "Connexion parallèle",
+        testBtnText: "TESTER CIRCUIT", resetBtnText: "RECOMMENCER", hintBtnText: "INDICE (-5)",
+        kt: "Tester", kr: "Recommencer", footerInfo: "Base Mars — Système Électrique",
+        bl1: "Tension Source", bl2: "Courant Requis", bl3: "Résistances Disponibles", bl4: "Objectif",
+        ssl: "SCORE", asl: "ESSAIS", rsl: "RÉSISTANCE",
+        targetLabel: "Objectif:", actualLabel: "Résultat:", currentLabel: "Courant:",
+        nextBtnText: "MISSION SUIVANTE", retryBtnText: "RÉESSAYER",
+        cinematicScene: `<div class="scene-dialogue"><span class="scene-speaker tanaka">DR. TANAKA:</span><span class="scene-text">"La tempête de sable a détruit le système électrique! Tu dois <span class="emphasis">réparer le circuit</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Nous avons besoin d'exactement <span class="emphasis">2A</span> de courant. Avec 24V, tu as besoin de <span class="emphasis">R = 12Ω</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker player">TOI:</span><span class="scene-text">"V = IR, donc R = V/I = 24/2 = 12Ω. Quelle combinaison de résistances dois-je utiliser?"</span></div>`,
+        dialogueReady: "Sélectionne les résistances et le type de connexion pour atteindre <span class='highlight'>R = 12Ω</span>.",
+        dialogueSuccess: "Parfait! Le circuit fonctionne avec exactement 2A!",
+        dialogueFail: "Mauvaise résistance! Le courant n'est pas correct.",
+        dialogueHint: "Souviens-toi: Série R = R₁+R₂, Parallèle 1/R = 1/R₁+1/R₂. Quelle combinaison donne 12Ω?",
+        resultGold: "CIRCUIT PARFAIT!", resultSilver: "BON TRAVAIL!", resultBronze: "SUCCÈS!", resultFail: "ÉCHOUÉ!",
+        endSuccess: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Excellent! Le circuit est correctement connecté."</span></div>`,
+        endFail: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"La résistance n'est pas correcte. Recalcule!"</span></div>`
+      },
+      bg: {
+        introTitle: "ЕЛЕКТРИЧЕСКА МРЕЖА", headerTitle: "ЕЛЕКТРИЧЕСКА МРЕЖА", startBtnText: "СТАРТ", backText: "НАЗАД",
+        attemptsLabel: "ОПИТИ", scoreLabel: "ТОЧКИ", mdt: "ДАННИ ЗА ВЕРИГАТА",
+        voltLabel: "Напрежение източник:", targetRLabel: "Цел R:", currentRLabel: "Текущо R:", resultILabel: "Ток I:",
+        selectTitle: "ИЗБЕРИ РЕЗИСТОРИ", seriesText: "ПОСЛЕДОВАТЕЛНО", parallelText: "ПАРАЛЕЛНО",
+        physicsTitle: "ЗАКОН НА ОМ", fn1: "Закон на Ом", fn2: "Последователна връзка", fn3: "Паралелна връзка",
+        testBtnText: "ТЕСТВАЙ ВЕРИГА", resetBtnText: "РЕСТАРТ", hintBtnText: "ПОДСКАЗКА (-5)",
+        kt: "Тест", kr: "Рестарт", footerInfo: "Марс База — Електросистема",
+        bl1: "Напрежение Източник", bl2: "Необходим Ток", bl3: "Налични Резистори", bl4: "Цел",
+        ssl: "ТОЧКИ", asl: "ОПИТИ", rsl: "СЪПРОТИВЛЕНИЕ",
+        targetLabel: "Цел:", actualLabel: "Резултат:", currentLabel: "Ток:",
+        nextBtnText: "СЛЕДВАЩА МИСИЯ", retryBtnText: "ОПИТАЙ ОТНОВО",
+        cinematicScene: `<div class="scene-dialogue"><span class="scene-speaker tanaka">Д-Р ТАНАКА:</span><span class="scene-text">"Пясъчната буря унищожи електрическата система! Трябва да <span class="emphasis">поправиш веригата</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">НЮТОН:</span><span class="scene-text">"Имаме нужда от точно <span class="emphasis">2A</span> ток. При 24V ти трябва <span class="emphasis">R = 12Ω</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker player">ТИ:</span><span class="scene-text">"V = IR, значи R = V/I = 24/2 = 12Ω. Каква комбинация от резистори да използвам?"</span></div>`,
+        dialogueReady: "Избери резистори и тип връзка за да постигнеш <span class='highlight'>R = 12Ω</span>.",
+        dialogueSuccess: "Перфектно! Веригата работи с точно 2A!",
+        dialogueFail: "Грешно съпротивление! Токът не е правилен.",
+        dialogueHint: "Помни: Последователно R = R₁+R₂, Паралелно 1/R = 1/R₁+1/R₂. Коя комбинация дава 12Ω?",
+        resultGold: "ПЕРФЕКТНА ВЕРИГА!", resultSilver: "ДОБРА РАБОТА!", resultBronze: "УСПЕХ!", resultFail: "НЕУСПЕХ!",
+        endSuccess: `<div class="scene-dialogue"><span class="scene-speaker newton">НЮТОН:</span><span class="scene-text">"Отлично! Веригата е свързана правилно."</span></div>`,
+        endFail: `<div class="scene-dialogue"><span class="scene-speaker newton">НЮТОН:</span><span class="scene-text">"Съпротивлението не е правилно. Преизчисли!"</span></div>`
+      },
+      pt: {
+        introTitle: "REDE ELÉTRICA", headerTitle: "REDE ELÉTRICA", startBtnText: "INICIAR", backText: "VOLTAR",
+        attemptsLabel: "TENTATIVAS", scoreLabel: "PONTOS", mdt: "DADOS DO CIRCUITO",
+        voltLabel: "Tensão fonte:", targetRLabel: "R alvo:", currentRLabel: "R atual:", resultILabel: "Corrente I:",
+        selectTitle: "SELECIONAR RESISTORES", seriesText: "SÉRIE", parallelText: "PARALELO",
+        physicsTitle: "LEI DE OHM", fn1: "Lei de Ohm", fn2: "Conexão em série", fn3: "Conexão paralela",
+        testBtnText: "TESTAR CIRCUITO", resetBtnText: "REINICIAR", hintBtnText: "DICA (-5)",
+        kt: "Testar", kr: "Reiniciar", footerInfo: "Base Marte — Sistema Elétrico",
+        bl1: "Tensão Fonte", bl2: "Corrente Necessária", bl3: "Resistores Disponíveis", bl4: "Objetivo",
+        ssl: "PONTOS", asl: "TENTATIVAS", rsl: "RESISTÊNCIA",
+        targetLabel: "Objetivo:", actualLabel: "Resultado:", currentLabel: "Corrente:",
+        nextBtnText: "PRÓXIMA MISSÃO", retryBtnText: "TENTAR NOVAMENTE",
+        cinematicScene: `<div class="scene-dialogue"><span class="scene-speaker tanaka">DRA. TANAKA:</span><span class="scene-text">"A tempestade de areia destruiu o sistema elétrico! Você precisa <span class="emphasis">reparar o circuito</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Precisamos de exatamente <span class="emphasis">2A</span> de corrente. Com 24V, você precisa de <span class="emphasis">R = 12Ω</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker player">VOCÊ:</span><span class="scene-text">"V = IR, então R = V/I = 24/2 = 12Ω. Qual combinação de resistores devo usar?"</span></div>`,
+        dialogueReady: "Selecione resistores e tipo de conexão para alcançar <span class='highlight'>R = 12Ω</span>.",
+        dialogueSuccess: "Perfeito! O circuito funciona com exatamente 2A!",
+        dialogueFail: "Resistência errada! A corrente não está correta.",
+        dialogueHint: "Lembre-se: Série R = R₁+R₂, Paralelo 1/R = 1/R₁+1/R₂. Qual combinação dá 12Ω?",
+        resultGold: "CIRCUITO PERFEITO!", resultSilver: "BOM TRABALHO!", resultBronze: "SUCESSO!", resultFail: "FALHOU!",
+        endSuccess: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Excelente! O circuito está conectado corretamente."</span></div>`,
+        endFail: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"A resistência não está correta. Recalcule!"</span></div>`
+      },
+      fi: {
+        introTitle: "SÄHKÖVERKKO", headerTitle: "SÄHKÖVERKKO", startBtnText: "ALOITA", backText: "TAKAISIN",
+        attemptsLabel: "YRITYKSET", scoreLabel: "PISTEET", mdt: "PIIRIN TIEDOT",
+        voltLabel: "Lähteen jännite:", targetRLabel: "Tavoite R:", currentRLabel: "Nykyinen R:", resultILabel: "Virta I:",
+        selectTitle: "VALITSE VASTUKSET", seriesText: "SARJA", parallelText: "RINNAN",
+        physicsTitle: "OHMIN LAKI", fn1: "Ohmin laki", fn2: "Sarjakytkentä", fn3: "Rinnankytkentä",
+        testBtnText: "TESTAA PIIRI", resetBtnText: "ALUSTA", hintBtnText: "VIHJE (-5)",
+        kt: "Testaa", kr: "Alusta", footerInfo: "Mars Tukikohta — Sähköjärjestelmä",
+        bl1: "Lähteen Jännite", bl2: "Tarvittava Virta", bl3: "Saatavat Vastukset", bl4: "Tavoite",
+        ssl: "PISTEET", asl: "YRITYKSET", rsl: "VASTUS",
+        targetLabel: "Tavoite:", actualLabel: "Tulos:", currentLabel: "Virta:",
+        nextBtnText: "SEURAAVA TEHTÄVÄ", retryBtnText: "YRITÄ UUDELLEEN",
+        cinematicScene: `<div class="scene-dialogue"><span class="scene-speaker tanaka">TRI TANAKA:</span><span class="scene-text">"Hiekkamyrsky tuhosi sähköjärjestelmän! Sinun täytyy <span class="emphasis">korjata piiri</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Tarvitsemme tarkalleen <span class="emphasis">2A</span> virtaa. 24V:lla tarvitset <span class="emphasis">R = 12Ω</span>."</span></div>
+          <div class="scene-dialogue"><span class="scene-speaker player">SINÄ:</span><span class="scene-text">"V = IR, joten R = V/I = 24/2 = 12Ω. Mitä vastusten yhdistelmää käytän?"</span></div>`,
+        dialogueReady: "Valitse vastukset ja kytkentätyyppi saavuttaaksesi <span class='highlight'>R = 12Ω</span>.",
+        dialogueSuccess: "Täydellistä! Piiri toimii tarkalleen 2A:lla!",
+        dialogueFail: "Väärä vastus! Virta ei ole oikea.",
+        dialogueHint: "Muista: Sarja R = R₁+R₂, Rinnan 1/R = 1/R₁+1/R₂. Mikä yhdistelmä antaa 12Ω?",
+        resultGold: "TÄYDELLINEN PIIRI!", resultSilver: "HYVÄÄ TYÖTÄ!", resultBronze: "ONNISTUI!", resultFail: "EPÄONNISTUI!",
+        endSuccess: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Erinomaista! Piiri on kytketty oikein."</span></div>`,
+        endFail: `<div class="scene-dialogue"><span class="scene-speaker newton">NEWTON:</span><span class="scene-text">"Vastus ei ole oikea. Laske uudelleen!"</span></div>`
+      }
+    };
+
+    let state = {
+      language: 'en', phase: 'intro', attempts: 0, score: 100, hintsUsed: 0,
+      selectedResistors: [], connectionType: 'series',
+      VOLTAGE: 24, TARGET_R: 12, TARGET_I: 2
+    };
+
+    const $ = id => document.getElementById(id);
+    const canvas = $('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function t(key) { return I18N[state.language][key] || key; }
+
+    function setLanguage(lang) {
+      state.language = lang;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+      document.querySelectorAll('.lang-option').forEach(o => o.classList.toggle('active', o.dataset.lang === lang));
+      updateAllText();
+      localStorage.setItem('atlas_language', lang);
+    }
+
+    function updateAllText() {
+      $('introTitle').textContent = t('introTitle');
+      $('cinematicScene').innerHTML = t('cinematicScene');
+      $('startBtnText').textContent = t('startBtnText');
+      $('headerTitle').textContent = t('headerTitle');
+      $('backText').textContent = t('backText');
+      $('attemptsLabel').textContent = t('attemptsLabel');
+      $('scoreLabel').textContent = t('scoreLabel');
+      $('mdt').textContent = t('mdt');
+      $('voltLabel').textContent = t('voltLabel');
+      $('targetRLabel').textContent = t('targetRLabel');
+      $('currentRLabel').textContent = t('currentRLabel');
+      $('resultILabel').textContent = t('resultILabel');
+      $('selectTitle').textContent = t('selectTitle');
+      $('seriesText').textContent = t('seriesText');
+      $('parallelText').textContent = t('parallelText');
+      $('physicsTitle').textContent = t('physicsTitle');
+      $('fn1').textContent = t('fn1');
+      $('fn2').textContent = t('fn2');
+      $('fn3').textContent = t('fn3');
+      $('testBtnText').textContent = t('testBtnText');
+      $('resetBtnText').textContent = t('resetBtnText');
+      $('hintBtnText').textContent = t('hintBtnText');
+      $('kt').textContent = t('kt');
+      $('kr').textContent = t('kr');
+      $('footerInfo').textContent = t('footerInfo');
+      $('bl1').textContent = t('bl1');
+      $('bl2').textContent = t('bl2');
+      $('bl3').textContent = t('bl3');
+      $('bl4').textContent = t('bl4');
+      $('ssl').textContent = t('ssl');
+      $('asl').textContent = t('asl');
+      $('rsl').textContent = t('rsl');
+      $('targetLabel').textContent = t('targetLabel');
+      $('actualLabel').textContent = t('actualLabel');
+      $('currentLabel').textContent = t('currentLabel');
+      $('nextBtnText').textContent = t('nextBtnText');
+      $('retryBtnText').textContent = t('retryBtnText');
+      $('dialogueText').innerHTML = t('dialogueReady');
+    }
+
+    function toggleResistor(r) {
+      const idx = state.selectedResistors.indexOf(r);
+      if (idx === -1) state.selectedResistors.push(r);
+      else state.selectedResistors.splice(idx, 1);
+      
+      document.querySelectorAll('.resistor-btn').forEach(btn => {
+        btn.classList.toggle('selected', state.selectedResistors.includes(parseInt(btn.dataset.r)));
+      });
+      updateDisplay();
+    }
+
+    function setConnection(type) {
+      state.connectionType = type;
+      $('seriesBtn').classList.toggle('active', type === 'series');
+      $('parallelBtn').classList.toggle('active', type === 'parallel');
+      updateDisplay();
+    }
+
+    function calculateR() {
+      if (state.selectedResistors.length === 0) return 0;
+      if (state.selectedResistors.length === 1) return state.selectedResistors[0];
+      
+      if (state.connectionType === 'series') {
+        return state.selectedResistors.reduce((a, b) => a + b, 0);
+      } else {
+        const sum = state.selectedResistors.reduce((a, b) => a + 1/b, 0);
+        return 1 / sum;
+      }
+    }
+
+    function updateDisplay() {
+      const R = calculateR();
+      $('currentR').textContent = R > 0 ? `${R.toFixed(2)} Ω` : '0 Ω';
+      if (R > 0) {
+        const I = state.VOLTAGE / R;
+        $('resultI').textContent = `${I.toFixed(2)} A`;
+      } else {
+        $('resultI').textContent = '-- A';
+      }
+      render();
+    }
+
+    function resizeCanvas() {
+      const wrapper = canvas.parentElement;
+      canvas.width = wrapper.clientWidth;
+      canvas.height = wrapper.clientHeight;
+    }
+
+    function render() {
+      const W = canvas.width, H = canvas.height;
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(0, 0, W, H);
+      
+      // Draw grid
+      ctx.strokeStyle = 'rgba(0, 212, 255, 0.1)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+      for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+      
+      // Draw circuit
+      const cx = W / 2, cy = H / 2;
+      
+      // Battery
+      ctx.strokeStyle = '#00d4ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx - 200, cy - 50);
+      ctx.lineTo(cx - 200, cy + 50);
+      ctx.stroke();
+      
+      ctx.fillStyle = '#00d4ff';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText('24V', cx - 230, cy + 5);
+      ctx.fillText('+', cx - 195, cy - 60);
+      ctx.fillText('-', cx - 195, cy + 70);
+      
+      // Wires
+      ctx.strokeStyle = state.selectedResistors.length > 0 ? '#39ff14' : '#00d4ff';
+      ctx.beginPath();
+      ctx.moveTo(cx - 200, cy - 50);
+      ctx.lineTo(cx - 50, cy - 50);
+      
+      // Draw resistors
+      if (state.selectedResistors.length > 0) {
+        if (state.connectionType === 'series') {
+          let x = cx - 50;
+          state.selectedResistors.forEach((r, i) => {
+            drawResistor(x, cy - 50, r);
+            x += 60;
+          });
+          ctx.moveTo(x - 30, cy - 50);
+          ctx.lineTo(cx + 150, cy - 50);
+          ctx.lineTo(cx + 150, cy + 50);
+          ctx.lineTo(cx - 200, cy + 50);
+        } else {
+          ctx.lineTo(cx, cy - 50);
+          ctx.lineTo(cx, cy - 100);
+          state.selectedResistors.forEach((r, i) => {
+            const yOffset = -80 + i * 60;
+            ctx.moveTo(cx, cy + yOffset);
+            ctx.lineTo(cx + 30, cy + yOffset);
+            drawResistor(cx + 30, cy + yOffset, r);
+            ctx.moveTo(cx + 90, cy + yOffset);
+            ctx.lineTo(cx + 120, cy + yOffset);
+          });
+          ctx.moveTo(cx + 120, cy - 80);
+          ctx.lineTo(cx + 120, cy - 80 + (state.selectedResistors.length - 1) * 60);
+          ctx.moveTo(cx + 120, cy - 50);
+          ctx.lineTo(cx + 150, cy - 50);
+          ctx.lineTo(cx + 150, cy + 50);
+          ctx.lineTo(cx - 200, cy + 50);
+        }
+      } else {
+        ctx.lineTo(cx + 150, cy - 50);
+        ctx.lineTo(cx + 150, cy + 50);
+        ctx.lineTo(cx - 200, cy + 50);
+      }
+      ctx.stroke();
+      
+      // Display calculated values
+      const R = calculateR();
+      ctx.fillStyle = '#fff';
+      ctx.font = '18px monospace';
+      ctx.fillText(`R_total = ${R.toFixed(2)} Ω`, 20, 30);
+      if (R > 0) {
+        const I = state.VOLTAGE / R;
+        ctx.fillStyle = Math.abs(I - state.TARGET_I) < 0.1 ? '#39ff14' : '#e63946';
+        ctx.fillText(`I = V/R = ${state.VOLTAGE}/${R.toFixed(1)} = ${I.toFixed(2)} A`, 20, 55);
+      }
+      ctx.fillStyle = '#ffd60a';
+      ctx.fillText(`Στόχος: R = ${state.TARGET_R}Ω, I = ${state.TARGET_I}A`, 20, 80);
+    }
+
+    function drawResistor(x, y, value) {
+      ctx.save();
+      ctx.strokeStyle = '#ffd60a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.rect(x, y - 10, 60, 20);
+      ctx.stroke();
+      ctx.fillStyle = '#ffd60a';
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText(`${value}Ω`, x + 15, y + 5);
+      ctx.restore();
+    }
+
+    function testCircuit() {
+      if (state.selectedResistors.length === 0) return;
+      
+      state.attempts++;
+      $('attemptsDisplay').textContent = state.attempts;
+      
+      const R = calculateR();
+      const I = state.VOLTAGE / R;
+      const success = Math.abs(R - state.TARGET_R) < 0.5;
+      
+      if (success) {
+        state.phase = 'success';
+        $('dialogueText').innerHTML = t('dialogueSuccess');
+      } else {
+        state.phase = 'failed';
+        $('dialogueText').innerHTML = t('dialogueFail');
+      }
+      
+      setTimeout(() => showEndScreen(success, R, I), 1000);
+    }
+
+    function showEndScreen(success, R, I) {
+      const attemptScore = Math.max(0, 100 - (state.attempts - 1) * 15);
+      state.score = success ? Math.max(0, attemptScore - state.hintsUsed * 5) : 0;
+      
+      let medal, resultClass, resultText;
+      if (!success) { medal = '💔'; resultClass = 'fail'; resultText = t('resultFail'); }
+      else if (state.attempts === 1) { medal = '🥇'; resultClass = 'gold'; resultText = t('resultGold'); }
+      else if (state.attempts <= 3) { medal = '🥈'; resultClass = 'silver'; resultText = t('resultSilver'); }
+      else { medal = '🥉'; resultClass = 'bronze'; resultText = t('resultBronze'); }
+      
+      $('resultMedal').textContent = medal;
+      $('resultTitle').textContent = resultText;
+      $('resultTitle').className = `result-title ${resultClass}`;
+      $('finalScore').textContent = state.score;
+      $('finalAttempts').textContent = state.attempts;
+      $('finalR').textContent = `${R.toFixed(1)}Ω`;
+      $('targetValue').textContent = `${state.TARGET_R}Ω`;
+      $('actualValue').textContent = `${R.toFixed(2)}Ω`;
+      $('actualValue').className = `analysis-value ${success ? 'good' : 'error'}`;
+      $('currentValue').textContent = `${I.toFixed(2)}A`;
+      $('currentValue').className = `analysis-value ${success ? 'good' : 'error'}`;
+      $('endCinematic').innerHTML = success ? t('endSuccess') : t('endFail');
+      $('nextBtn').style.display = success ? 'block' : 'none';
+      $('endModal').classList.remove('hidden');
+      
+      localStorage.setItem('atlas_game5_completed', success);
+      localStorage.setItem('atlas_game5_score', state.score);
+    }
+
+    function resetCircuit() {
+      state.selectedResistors = [];
+      document.querySelectorAll('.resistor-btn').forEach(btn => btn.classList.remove('selected'));
+      setConnection('series');
+      updateDisplay();
+      $('dialogueText').innerHTML = t('dialogueReady');
+    }
+
+    function giveHint() {
+      if (state.hintsUsed >= 3) return;
+      state.hintsUsed++;
+      state.score = Math.max(0, state.score - 5);
+      $('scoreDisplay').textContent = state.score;
+      $('dialogueText').innerHTML = t('dialogueHint');
+    }
+
+    function startGame() {
+      state.phase = 'ready';
+      $('introModal').classList.add('hidden');
+    }
+
+    function goBack() { window.location.href = 'index.html'; }
+    function goNext() { window.location.href = 'asteroid_deflection.html'; }
+    function retry() {
+      $('endModal').classList.add('hidden');
+      state.attempts = 0;
+      state.hintsUsed = 0;
+      state.score = 100;
+      $('attemptsDisplay').textContent = '0';
+      $('scoreDisplay').textContent = '100';
+      resetCircuit();
+    }
+
+    function init() {
+      const savedLang = localStorage.getItem('atlas_language');
+      if (savedLang) setLanguage(savedLang);
+      
+      resizeCanvas();
+      window.addEventListener('resize', () => { resizeCanvas(); render(); });
+      
+      $('startGameBtn').addEventListener('click', startGame);
+      $('nextBtn').addEventListener('click', goNext);
+      $('retryBtn').addEventListener('click', retry);
+      
+      document.addEventListener('keydown', e => {
+        if (e.code === 'Space' && state.phase === 'ready') testCircuit();
+        if (e.code === 'KeyR') resetCircuit();
+      });
+      
+      updateAllText();
+      render();
+      console.log('⚡ POWER GRID initialized');
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
