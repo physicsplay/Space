@@ -38,6 +38,7 @@ All games support 8 languages:
 - 🇩🇪 German (Deutsch)
 - 🇫🇷 French (Français)
 - 🇧🇬 Bulgarian (Български)
+- FI Finish (Suomi)
 - 🇵🇹 Portuguese (Português)
 
 ## 🎯 How to Play
