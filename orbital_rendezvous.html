@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🛰️ ORBITAL RENDEZVOUS — Mission ATLAS Act 2</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --void-black: #030308;
+      --deep-space: #0a0a1a;
+      --earth-blue: #4361ee;
+      --earth-glow: rgba(67, 97, 238, 0.4);
+      --star-white: #f0f4ff;
+      --orbit-cyan: #4ecdc4;
+      --thrust-orange: #ff6b35;
+      --warning-red: #e63946;
+      --success-green: #06d6a0;
+      --gold: #ffd60a;
+      --silver: #c0c0c0;
+      --bronze: #cd7f32;
+      --moon-gray: #888899;
+      --font-display: 'Courier New', monospace;
+      --font-body: 'Segoe UI', system-ui, sans-serif;
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 2rem;
+      --space-xl: 3rem;
+      --glow-blue: 0 0 20px rgba(67, 97, 238, 0.5), 0 0 40px rgba(67, 97, 238, 0.3);
+      --glow-gold: 0 0 20px rgba(255, 214, 10, 0.5), 0 0 40px rgba(255, 214, 10, 0.3);
+      --glow-cyan: 0 0 20px rgba(78, 205, 196, 0.5);
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--void-black);
+      color: var(--star-white);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .game-container {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+      gap: 0;
+    }
+
+    @media (max-width: 900px) {
+      .game-container { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; }
+    }
+
+    /* Header */
+    .header {
+      grid-column: 1 / -1;
+      background: linear-gradient(180deg, rgba(10, 10, 26, 0.95), rgba(10, 10, 26, 0.8));
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 100;
+    }
+
+    .header-left { display: flex; align-items: center; gap: var(--space-md); }
+
+    .back-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: var(--space-sm) var(--space-md);
+      color: var(--star-white);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+    .game-title { font-family: var(--font-display); font-size: 1.2rem; letter-spacing: 0.1em; }
+    .game-title .act { color: var(--gold); font-size: 0.8rem; }
+
+    .header-center { display: flex; gap: var(--space-lg); }
+
+    .stat-box { text-align: center; }
+    .stat-value { font-family: var(--font-display); font-size: 1.3rem; font-weight: bold; }
+    .stat-value.attempts { color: var(--earth-blue); }
+    .stat-value.score { color: var(--gold); }
+    .stat-value.hints { color: var(--thrust-orange); }
+    .stat-label { font-size: 0.7rem; color: var(--moon-gray); text-transform: uppercase; letter-spacing: 0.1em; }
+
+    .header-right { display: flex; gap: var(--space-sm); }
+
+    .lang-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      padding: var(--space-xs) var(--space-sm);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .lang-btn:hover, .lang-btn.active {
+      background: rgba(255, 214, 10, 0.2);
+      border-color: var(--gold);
+    }
+
+    /* Canvas */
+    .canvas-wrapper { position: relative; background: var(--deep-space); overflow: hidden; }
+    #gameCanvas { display: block; width: 100%; height: 100%; }
+
+    /* Control Panel */
+    .control-panel {
+      background: linear-gradient(180deg, rgba(20, 20, 40, 0.98), rgba(10, 10, 30, 0.98));
+      padding: var(--space-md);
+      overflow-y: auto;
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    @media (max-width: 900px) {
+      .control-panel { border-left: none; border-top: 1px solid rgba(255, 255, 255, 0.1); max-height: 40vh; }
+    }
+
+    .panel-section {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      padding: var(--space-md);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      color: var(--gold);
+      margin-bottom: var(--space-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .data-row { display: flex; justify-content: space-between; align-items: center; padding: var(--space-xs) 0; font-size: 0.85rem; }
+    .data-label { color: var(--moon-gray); }
+    .data-value { font-family: var(--font-display); color: var(--star-white); }
+    .data-value.warning { color: var(--warning-red); animation: pulse 1s ease-in-out infinite; }
+    .data-value.success { color: var(--success-green); }
+    .data-value.cyan { color: var(--orbit-cyan); }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+    /* Sliders */
+    .slider-group { margin-bottom: var(--space-md); }
+    .slider-header { display: flex; justify-content: space-between; margin-bottom: var(--space-xs); }
+    .slider-label { font-size: 0.85rem; color: var(--moon-gray); }
+    .slider-value { font-family: var(--font-display); font-size: 0.9rem; color: var(--orbit-cyan); }
+
+    .slider {
+      width: 100%;
+      height: 8px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4ecdc4 0%, #2ab7ca 100%);
+      cursor: pointer;
+      box-shadow: var(--glow-cyan);
+    }
+
+    /* Formulas */
+    .formula-box {
+      background: rgba(67, 97, 238, 0.1);
+      border: 1px solid rgba(67, 97, 238, 0.3);
+      border-radius: 8px;
+      padding: var(--space-sm);
+      margin-bottom: var(--space-sm);
+    }
+
+    .formula { font-family: var(--font-display); font-size: 0.9rem; color: var(--earth-blue); text-align: center; }
+    .formula-note { font-size: 0.75rem; color: var(--moon-gray); text-align: center; margin-top: var(--space-xs); }
+
+    /* Buttons */
+    .btn-group { display: flex; flex-direction: column; gap: var(--space-sm); }
+
+    .btn {
+      padding: var(--space-md);
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-primary { background: linear-gradient(135deg, #4ecdc4 0%, #2ab7ca 100%); color: white; }
+    .btn-primary:hover:not(:disabled) { transform: scale(1.02); box-shadow: var(--glow-cyan); }
+    .btn-primary:disabled { background: rgba(255, 255, 255, 0.1); color: var(--moon-gray); cursor: not-allowed; }
+    .btn-secondary { background: rgba(255, 255, 255, 0.1); color: var(--star-white); border: 1px solid rgba(255, 255, 255, 0.2); }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+    .btn-hint { background: rgba(255, 214, 10, 0.2); color: var(--gold); border: 1px solid rgba(255, 214, 10, 0.3); }
+    .btn-hint:hover:not(:disabled) { background: rgba(255, 214, 10, 0.3); }
+    .btn-boost { background: linear-gradient(135deg, #06d6a0 0%, #00a878 100%); color: white; }
+    .btn-brake { background: linear-gradient(135deg, #e63946 0%, #9d0208 100%); color: white; }
+
+    /* Dialogue */
+    .dialogue-box {
+      background: rgba(0, 0, 0, 0.5);
+      border-left: 3px solid var(--earth-blue);
+      padding: var(--space-sm);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      min-height: 60px;
+    }
+
+    .dialogue-speaker { color: var(--earth-blue); font-weight: bold; font-size: 0.75rem; margin-bottom: var(--space-xs); }
+    .dialogue-text { color: var(--star-white); }
+    .dialogue-text .highlight { color: var(--gold); }
+    .dialogue-text .paradox { color: var(--orbit-cyan); font-weight: bold; }
+
+    /* Footer */
+    .footer {
+      grid-column: 1 / -1;
+      background: rgba(10, 10, 26, 0.95);
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.8rem;
+      color: var(--moon-gray);
+    }
+
+    .controls-hint { display: flex; gap: var(--space-md); }
+    .key { background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 4px; font-family: var(--font-display); font-size: 0.75rem; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-lg);
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+
+    .modal {
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: linear-gradient(135deg, rgba(10, 10, 26, 0.98), rgba(26, 10, 46, 0.98));
+      border: 2px solid var(--gold);
+      border-radius: 20px;
+      padding: var(--space-xl);
+      animation: modalAppear 0.5s ease;
+    }
+
+    @keyframes modalAppear { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      text-align: center;
+      margin-bottom: var(--space-md);
+      background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Language Selector */
+    .lang-selector-intro {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+      padding: var(--space-md);
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+    }
+
+    .lang-selector-intro .lang-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-md);
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 100px;
+    }
+
+    .lang-selector-intro .lang-option:hover {
+      background: rgba(255, 214, 10, 0.1);
+      border-color: rgba(255, 214, 10, 0.5);
+      transform: translateY(-3px);
+    }
+
+    .lang-selector-intro .lang-option.active {
+      background: rgba(255, 214, 10, 0.2);
+      border-color: var(--gold);
+      box-shadow: var(--glow-gold);
+    }
+
+    .lang-selector-intro .lang-flag { font-size: 2.5rem; }
+    .lang-selector-intro .lang-name { font-size: 0.85rem; color: var(--moon-gray); font-weight: bold; }
+    .lang-selector-intro .lang-option.active .lang-name { color: var(--gold); }
+
+    .lang-label {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--moon-gray);
+      margin-bottom: var(--space-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* Cinematic */
+    .cinematic-scene {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 12px;
+      padding: var(--space-lg);
+      margin-bottom: var(--space-lg);
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      line-height: 1.8;
+    }
+
+    .scene-direction { color: var(--moon-gray); font-style: italic; margin-bottom: var(--space-sm); }
+    .scene-dialogue { margin-bottom: var(--space-md); }
+    .scene-speaker { color: var(--earth-blue); font-weight: bold; }
+    .scene-speaker.tanaka { color: #4ecdc4; }
+    .scene-speaker.vega { color: #e63946; }
+    .scene-speaker.newton { color: #a8dadc; }
+    .scene-speaker.luna { color: #ff9ff3; }
+    .scene-speaker.player { color: var(--gold); }
+    .scene-text { color: var(--star-white); margin-left: var(--space-md); }
+    .scene-text .emphasis { color: var(--gold); font-weight: bold; }
+    .scene-text .paradox { color: var(--orbit-cyan); font-weight: bold; }
+
+    /* Briefing */
+    .briefing-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+
+    @media (max-width: 500px) {
+      .briefing-grid { grid-template-columns: 1fr; }
+      .lang-selector-intro { flex-wrap: wrap; }
+      .lang-selector-intro .lang-option { min-width: 80px; padding: var(--space-sm); }
+      .lang-selector-intro .lang-flag { font-size: 2rem; }
+    }
+
+    .briefing-item {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      padding: var(--space-md);
+      text-align: center;
+    }
+
+    .briefing-icon { font-size: 2rem; margin-bottom: var(--space-sm); }
+    .briefing-label { font-size: 0.75rem; color: var(--moon-gray); margin-bottom: var(--space-xs); }
+    .briefing-value { font-family: var(--font-display); font-size: 1.1rem; color: var(--orbit-cyan); }
+
+    /* Result Screen */
+    .result-display { text-align: center; margin-bottom: var(--space-lg); }
+    .result-medal { font-size: 5rem; margin-bottom: var(--space-md); animation: medalBounce 0.5s ease; }
+    @keyframes medalBounce { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+    .result-title { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: var(--space-sm); }
+    .result-title.gold { color: var(--gold); }
+    .result-title.silver { color: var(--silver); }
+    .result-title.bronze { color: var(--bronze); }
+    .result-title.fail { color: var(--warning-red); }
+
+    .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); margin-bottom: var(--space-lg); }
+    .result-stat { background: rgba(0, 0, 0, 0.3); border-radius: 10px; padding: var(--space-md); }
+    .result-stat-value { font-family: var(--font-display); font-size: 1.5rem; color: var(--gold); }
+    .result-stat-label { font-size: 0.75rem; color: var(--moon-gray); }
+
+    .analysis-section {
+      background: rgba(67, 97, 238, 0.1);
+      border: 1px solid rgba(67, 97, 238, 0.3);
+      border-radius: 12px;
+      padding: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+
+    .analysis-title { font-size: 0.9rem; color: var(--earth-blue); margin-bottom: var(--space-sm); }
+    .analysis-row { display: flex; justify-content: space-between; padding: var(--space-xs) 0; font-size: 0.85rem; }
+    .analysis-label { color: var(--moon-gray); }
+    .analysis-value { font-family: var(--font-display); }
+    .analysis-value.theoretical { color: var(--earth-blue); }
+    .analysis-value.actual { color: var(--orbit-cyan); }
+    .analysis-value.error { color: var(--warning-red); }
+    .analysis-value.good { color: var(--success-green); }
+
+    .modal-btn {
+      display: block;
+      width: 100%;
+      padding: var(--space-md);
+      background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+      border: none;
+      border-radius: 12px;
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      color: var(--void-black);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .modal-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(255, 214, 10, 0.5); }
+    .modal-btn.secondary { background: rgba(255, 255, 255, 0.1); color: var(--star-white); margin-top: var(--space-sm); }
+
+    /* Pause */
+    .pause-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .pause-overlay.active { opacity: 1; pointer-events: all; }
+    .pause-content { text-align: center; padding: var(--space-xl); }
+    .pause-title { font-family: var(--font-display); font-size: 2rem; color: var(--gold); margin-bottom: var(--space-md); }
+    .pause-subtitle { color: var(--star-white); margin-bottom: var(--space-lg); }
+    .pause-data { background: rgba(0, 0, 0, 0.5); border-radius: 12px; padding: var(--space-lg); margin-bottom: var(--space-lg); display: inline-block; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <!-- INTRO MODAL -->
+  <div class="modal-overlay" id="introModal">
+    <div class="modal">
+      <h1 class="modal-title">🛰️ <span id="introTitle">ΤΡΟΧΙΑΚΗ ΣΥΝΑΝΤΗΣΗ</span></h1>
+      
+      <div class="lang-label" id="langLabel">ΕΠΙΛΕΞΤΕ ΓΛΩΣΣΑ / SELECT LANGUAGE / SELEZIONA LINGUA</div>
+      <div class="lang-selector-intro">
+        <div class="lang-option" data-lang="el" onclick="setLanguage('el')">
+          <span class="lang-flag">🇬🇷</span>
+          <span class="lang-name">Ελληνικά</span>
+        </div>
+        <div class="lang-option active" data-lang="en" onclick="setLanguage('en')">
+          <span class="lang-flag">🇬🇧</span>
+          <span class="lang-name">English</span>
+        </div>
+        <div class="lang-option" data-lang="it" onclick="setLanguage('it')">
+          <span class="lang-flag">🇮🇹</span>
+          <span class="lang-name">Italiano</span>
+        </div>
+      </div>
+      
+      <div class="cinematic-scene" id="cinematicScene"></div>
+      
+      <div class="briefing-grid">
+        <div class="briefing-item">
+          <div class="briefing-icon">🌍</div>
+          <div class="briefing-label" id="briefingLabel1">Τροχιακό Ύψος</div>
+          <div class="briefing-value">h = 400 km</div>
+        </div>
+        <div class="briefing-item">
+          <div class="briefing-icon">⏱️</div>
+          <div class="briefing-label" id="briefingLabel2">Τροχιακή Περίοδος</div>
+          <div class="briefing-value">T ≈ 92 min</div>
+        </div>
+        <div class="briefing-item">
+          <div class="briefing-icon">📏</div>
+          <div class="briefing-label" id="briefingLabel3">Απόσταση από Στόχο</div>
+          <div class="briefing-value">Δx = 50 km</div>
+        </div>
+        <div class="briefing-item">
+          <div class="briefing-icon">🎯</div>
+          <div class="briefing-label" id="briefingLabel4">Στόχος Απόκλισης</div>
+          <div class="briefing-value">< 1 km</div>
+        </div>
+      </div>
+      
+      <button class="modal-btn" id="startGameBtn">
+        🛰️ <span id="startBtnText">ΕΝΑΡΞΗ ΑΠΟΣΤΟΛΗΣ</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- PAUSE OVERLAY -->
+  <div class="pause-overlay" id="pauseOverlay">
+    <div class="pause-content">
+      <h2 class="pause-title">⏸️ <span id="pauseTitle">ΠΑΥΣΗ</span></h2>
+      <p class="pause-subtitle" id="pauseSubtitle">Ώρα για τροχιακούς υπολογισμούς!</p>
+      <div class="pause-data">
+        <div class="data-row">
+          <span class="data-label" id="pauseOrbit">Τρέχουσα τροχιά:</span>
+          <span class="data-value" id="pauseOrbitValue">--</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label" id="pauseDistance">Απόσταση από στόχο:</span>
+          <span class="data-value" id="pauseDistanceValue">--</span>
+        </div>
+        <div class="formula-box" style="margin-top: var(--space-md);">
+          <div class="formula">T² ∝ r³</div>
+          <div class="formula">Χαμηλότερη τροχιά = Μικρότερη περίοδος = Πιο γρήγορα!</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="togglePause()">
+        ▶️ <span id="resumeBtnText">ΣΥΝΕΧΕΙΑ</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- END MODAL -->
+  <div class="modal-overlay hidden" id="endModal">
+    <div class="modal">
+      <div class="result-display">
+        <div class="result-medal" id="resultMedal">🥇</div>
+        <h2 class="result-title gold" id="resultTitle">ΤΕΛΕΙΟ DOCKING!</h2>
+      </div>
+      <div class="cinematic-scene" id="endCinematic"></div>
+      <div class="result-stats">
+        <div class="result-stat">
+          <div class="result-stat-value" id="finalScore">100</div>
+          <div class="result-stat-label" id="scoreStatLabel">ΒΑΘΜΟΣ</div>
+        </div>
+        <div class="result-stat">
+          <div class="result-stat-value" id="finalAttempts">1</div>
+          <div class="result-stat-label" id="attemptsStatLabel">ΠΡΟΣΠΑΘΕΙΕΣ</div>
+        </div>
+        <div class="result-stat">
+          <div class="result-stat-value" id="finalDistance">0.5</div>
+          <div class="result-stat-label" id="distanceStatLabel">ΑΠΟΚΛΙΣΗ (km)</div>
+        </div>
+      </div>
+      <div class="analysis-section">
+        <div class="analysis-title" id="analysisTitle">📊 ΑΝΑΛΥΣΗ ΤΡΟΧΙΑΚΗΣ ΜΗΧΑΝΙΚΗΣ</div>
+        <div class="analysis-row">
+          <span class="analysis-label" id="theoreticalLabel">Βέλτιστο Δv:</span>
+          <span class="analysis-value theoretical" id="theoreticalV">--</span>
+        </div>
+        <div class="analysis-row">
+          <span class="analysis-label" id="actualLabel">Εφαρμοσμένο Δv:</span>
+          <span class="analysis-value actual" id="actualV">--</span>
+        </div>
+        <div class="analysis-row">
+          <span class="analysis-label" id="errorLabel">Τελική απόκλιση:</span>
+          <span class="analysis-value" id="errorValue">--</span>
+        </div>
+      </div>
+      <button class="modal-btn" id="nextMissionBtn">
+        🔴 <span id="nextBtnText">ΣΥΝΕΧΕΙΑ ΣΤΟΝ ΑΡΗ</span>
+      </button>
+      <button class="modal-btn secondary" id="retryBtn">
+        ↺ <span id="retryBtnText">ΔΟΚΙΜΑΣΕ ΞΑΝΑ</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN GAME -->
+  <div class="game-container" id="gameContainer">
+    <header class="header">
+      <div class="header-left">
+        <button class="back-btn" onclick="goBack()">← <span id="backText">ΠΙΣΩ</span></button>
+        <div class="game-title">
+          <div class="act">ACT 2</div>
+          <span id="headerTitle">ORBITAL RENDEZVOUS</span>
+        </div>
+      </div>
+      <div class="header-center">
+        <div class="stat-box">
+          <div class="stat-value attempts" id="attemptsDisplay">0</div>
+          <div class="stat-label" id="attemptsLabel">ΠΡΟΣΠΑΘΕΙΕΣ</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value score" id="scoreDisplay">100</div>
+          <div class="stat-label" id="scoreLabelHeader">ΒΑΘΜΟΣ</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value hints" id="hintsDisplay">0</div>
+          <div class="stat-label" id="hintsLabel">HINTS</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="lang-btn" data-lang="el" onclick="setLanguage('el')">🇬🇷</button>
+        <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">🇬🇧</button>
+        <button class="lang-btn" data-lang="it" onclick="setLanguage('it')">🇮🇹</button>
+        <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">🇪🇸</button>
+        <button class="lang-btn" data-lang="bg" onclick="setLanguage('bg')">🇧🇬</button>
+        <button class="lang-btn" data-lang="pt" onclick="setLanguage('pt')">🇵🇹</button>
+        <button class="lang-btn" data-lang="de" onclick="setLanguage('de')">🇩🇪</button>
+        <button class="lang-btn" data-lang="fr" onclick="setLanguage('fr')">🇫🇷</button>
+        <button class="lang-btn" data-lang="fi" onclick="setLanguage('fi')">🇫🇮</button>
+      </div>
+    </header>
+
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div class="control-panel">
+      <div class="panel-section">
+        <div class="section-title"><span>📡</span><span id="missionDataTitle">ΤΡΟΧΙΑΚΑ ΔΕΔΟΜΕΝΑ</span></div>
+        <div class="data-row">
+          <span class="data-label" id="orbitLabel">Τροχιά Atlas-7:</span>
+          <span class="data-value cyan" id="orbitValue">400 km</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label" id="targetOrbitLabel">Τροχιά Prometheus:</span>
+          <span class="data-value" id="targetOrbitValue">400 km</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label" id="distanceLabel">Απόσταση:</span>
+          <span class="data-value" id="distanceValue">50 km πίσω</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label" id="periodLabel">Περίοδος:</span>
+          <span class="data-value" id="periodValue">92.3 min</span>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title"><span>🚀</span><span id="maneuverTitle">ΕΛΙΓΜΟΣ</span></div>
+        <div class="slider-group">
+          <div class="slider-header">
+            <span class="slider-label" id="deltaVLabel">Μεταβολή Ταχύτητας (Δv):</span>
+            <span class="slider-value" id="deltaVDisplay">0 m/s</span>
+          </div>
+          <input type="range" class="slider" id="deltaVSlider" min="-200" max="200" value="0" step="5">
+        </div>
+        <p style="font-size: 0.75rem; color: var(--moon-gray); text-align: center; margin-top: var(--space-sm);" id="deltaVHint">
+          Αρνητικό = Φρενάρισμα (χαμηλότερη τροχιά)<br>
+          Θετικό = Επιτάχυνση (υψηλότερη τροχιά)
+        </p>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title"><span>📐</span><span id="physicsTitle">ΝΟΜΟΙ KEPLER</span></div>
+        <div class="formula-box">
+          <div class="formula">T² ∝ r³</div>
+          <div class="formula-note" id="formulaNote1">3ος Νόμος του Kepler</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula" id="paradoxFormula">Χαμηλή τροχιά → Γρήγορα!</div>
+          <div class="formula-note" id="formulaNote2">Το Τροχιακό Παράδοξο</div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="btn-group">
+          <button class="btn btn-primary" id="executeBtn">
+            🔥 <span id="executeBtnText">ΕΚΤΕΛΕΣΗ ΕΛΙΓΜΟΥ</span>
+          </button>
+          <button class="btn btn-secondary" id="resetBtn" disabled>
+            ↺ <span id="resetBtnText">ΕΠΑΝΑΦΟΡΑ</span>
+          </button>
+          <button class="btn btn-hint" id="hintBtn">
+            💡 <span id="hintBtnText">ΥΠΟΔΕΙΞΗ (-5)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="dialogue-box">
+          <div class="dialogue-speaker" id="dialogueSpeaker">NEWTON:</div>
+          <div class="dialogue-text" id="dialogueText">
+            Το <span class="paradox">τροχιακό παράδοξο</span>: Για να πιάσεις κάτι μπροστά σου, πρέπει να <span class="highlight">φρενάρεις</span>!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="controls-hint">
+        <span><span class="key">SPACE</span> <span id="keyExecute">Ελιγμός</span></span>
+        <span><span class="key">P</span> <span id="keyPause">Παύση</span></span>
+        <span><span class="key">R</span> <span id="keyReset">Επαναφορά</span></span>
+        <span><span class="key">H</span> <span id="keyHint">Υπόδειξη</span></span>
+      </div>
+      <div id="footerInfo">Τροχιά Γης — 400 km | ISS Altitude</div>
+    </footer>
+  </div>
+
+  <script>
+    /* ===== I18N ===== */
+    const I18N = {
+      el: {
+        langLabel: "ΕΠΙΛΕΞΤΕ ΓΛΩΣΣΑ",
+        introTitle: "ΤΡΟΧΙΑΚΗ ΣΥΝΑΝΤΗΣΗ",
+        headerTitle: "ORBITAL RENDEZVOUS",
+        startBtnText: "ΕΝΑΡΞΗ ΑΠΟΣΤΟΛΗΣ",
+        backText: "ΠΙΣΩ",
+        attemptsLabel: "ΠΡΟΣΠΑΘΕΙΕΣ",
+        scoreLabelHeader: "ΒΑΘΜΟΣ",
+        hintsLabel: "HINTS",
+        missionDataTitle: "ΤΡΟΧΙΑΚΑ ΔΕΔΟΜΕΝΑ",
+        orbitLabel: "Τροχιά Atlas-7:",
+        targetOrbitLabel: "Τροχιά Prometheus:",
+        distanceLabel: "Απόσταση:",
+        periodLabel: "Περίοδος:",
+        maneuverTitle: "ΕΛΙΓΜΟΣ",
+        deltaVLabel: "Μεταβολή Ταχύτητας (Δv):",
+        deltaVHint: "Αρνητικό = Φρενάρισμα (χαμηλότερη τροχιά)<br>Θετικό = Επιτάχυνση (υψηλότερη τροχιά)",
+        physicsTitle: "ΝΟΜΟΙ KEPLER",
+        formulaNote1: "3ος Νόμος του Kepler",
+        formulaNote2: "Το Τροχιακό Παράδοξο",
+        paradoxFormula: "Χαμηλή τροχιά → Γρήγορα!",
+        executeBtnText: "ΕΚΤΕΛΕΣΗ ΕΛΙΓΜΟΥ",
+        resetBtnText: "ΕΠΑΝΑΦΟΡΑ",
+        hintBtnText: "ΥΠΟΔΕΙΞΗ (-5)",
+        keyExecute: "Ελιγμός",
+        keyPause: "Παύση",
+        keyReset: "Επαναφορά",
+        keyHint: "Υπόδειξη",
+        pauseTitle: "ΠΑΥΣΗ",
+        pauseSubtitle: "Ώρα για τροχιακούς υπολογισμούς!",
+        pauseOrbit: "Τρέχουσα τροχιά:",
+        pauseDistance: "Απόσταση από στόχο:",
+        resumeBtnText: "ΣΥΝΕΧΕΙΑ",
+        scoreStatLabel: "ΒΑΘΜΟΣ",
+        attemptsStatLabel: "ΠΡΟΣΠΑΘΕΙΕΣ",
+        distanceStatLabel: "ΑΠΟΚΛΙΣΗ (km)",
+        analysisTitle: "📊 ΑΝΑΛΥΣΗ ΤΡΟΧΙΑΚΗΣ ΜΗΧΑΝΙΚΗΣ",
+        theoreticalLabel: "Βέλτιστο Δv:",
+        actualLabel: "Εφαρμοσμένο Δv:",
+        errorLabel: "Τελική απόκλιση:",
+        nextBtnText: "ΣΥΝΕΧΕΙΑ ΣΤΟΝ ΑΡΗ",
+        retryBtnText: "ΔΟΚΙΜΑΣΕ ΞΑΝΑ",
+        briefingLabel1: "Τροχιακό Ύψος",
+        briefingLabel2: "Τροχιακή Περίοδος",
+        briefingLabel3: "Απόσταση από Στόχο",
+        briefingLabel4: "Στόχος Απόκλισης",
+        footerInfo: "Τροχιά Γης — 400 km | ISS Altitude",
+        behind: "πίσω",
+        ahead: "μπροστά",
+        cinematicScene: `
+          <div class="scene-direction">[Atlas-7 — Τροχιά Γης, 400 km]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker tanaka">DR. TANAKA:</span>
+            <span class="scene-text">"Calculator, το Prometheus είναι <span class="emphasis">50 km μπροστά σου</span> στην ίδια τροχιά. Πρέπει να το πιάσεις."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"Προειδοποίηση: Η τροχιακή μηχανική είναι <span class="paradox">ΠΑΡΑΔΟΞΗ</span>. Αν επιταχύνεις, θα ανεβείς σε υψηλότερη τροχιά και θα πας <span class="emphasis">πιο αργά</span>."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker luna">LUNA CHEN:</span>
+            <span class="scene-text">"Περίμενε... για να πιάσω κάτι μπροστά μου, πρέπει να... φρενάρω;"</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker player">ΕΣΥ:</span>
+            <span class="scene-text">"T² ∝ r³... Χαμηλότερη τροχιά = Μικρότερη περίοδος = Πιο γρήγορος. Ναι, πρέπει να φρενάρω."</span>
+          </div>
+        `,
+        dialogueReady: "Το <span class='paradox'>τροχιακό παράδοξο</span>: Για να πιάσεις κάτι μπροστά σου, πρέπει να <span class='highlight'>φρενάρεις</span>!",
+        dialogueExecuting: "Ελιγμός σε εξέλιξη... Η τροχιά αλλάζει!",
+        dialogueClosing: "Πλησιάζεις! Η χαμηλότερη τροχιά σε κάνει πιο γρήγορο!",
+        dialogueSuccess: "Τέλειο docking! Η τροχιακή μηχανική δεν είναι τόσο παράδοξη τελικά!",
+        dialogueFail: "Έχασες τον στόχο! Η τροχιά σου δεν ήταν σωστή.",
+        dialogueWrongWay: "Πας προς τη λάθος κατεύθυνση! Απομακρύνεσαι από τον στόχο!",
+        dialogueHint: "Υπόδειξη: Φρέναρε (Δv < 0) για να πέσεις σε χαμηλότερη τροχιά. Εκεί θα κινείσαι πιο γρήγορα και θα πιάσεις τον στόχο!",
+        resultGold: "ΤΕΛΕΙΟ DOCKING!",
+        resultSilver: "ΚΑΛΗ ΠΡΟΣΕΓΓΙΣΗ!",
+        resultBronze: "RENDEZVOUS ΕΠΙΤΥΧΕΣ",
+        resultFail: "ΑΠΟΤΥΧΙΑ RENDEZVOUS",
+        endSuccess: `
+          <div class="scene-direction">[Atlas-7 συνδέθηκε με Prometheus]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Atlas-7, σε βλέπω στην αεροδιάδρομο. Calculator... μας έσωσες."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker luna">LUNA:</span>
+            <span class="scene-text">"Το 'φρένο για να επιταχύνεις'... τώρα το καταλαβαίνω! Είναι σαν να τρέχεις στο εσωτερικό μιας πίστας!"</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker tanaka">DR. TANAKA:</span>
+            <span class="scene-text">"Εξαιρετικά, Calculator. Το πλήρωμα είναι ασφαλές. Τώρα... ο Άρης μας περιμένει."</span>
+          </div>
+        `,
+        endFail: `
+          <div class="scene-direction">[Atlas-7 — Αποτυχημένη προσέγγιση]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"Το rendezvous απέτυχε. Ο στόχος απομακρύνεται."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Atlas-7... σας χάνουμε στο ραντάρ..."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker tanaka">DR. TANAKA:</span>
+            <span class="scene-text">"Δοκίμασε ξανά. Θυμήσου: χαμηλότερη τροχιά = πιο γρήγορα."</span>
+          </div>
+        `
+      },
+      en: {
+        langLabel: "SELECT LANGUAGE",
+        introTitle: "ORBITAL RENDEZVOUS",
+        headerTitle: "ORBITAL RENDEZVOUS",
+        startBtnText: "START MISSION",
+        backText: "BACK",
+        attemptsLabel: "ATTEMPTS",
+        scoreLabelHeader: "SCORE",
+        hintsLabel: "HINTS",
+        missionDataTitle: "ORBITAL DATA",
+        orbitLabel: "Atlas-7 Orbit:",
+        targetOrbitLabel: "Prometheus Orbit:",
+        distanceLabel: "Distance:",
+        periodLabel: "Period:",
+        maneuverTitle: "MANEUVER",
+        deltaVLabel: "Velocity Change (Δv):",
+        deltaVHint: "Negative = Brake (lower orbit)<br>Positive = Boost (higher orbit)",
+        physicsTitle: "KEPLER'S LAWS",
+        formulaNote1: "Kepler's 3rd Law",
+        formulaNote2: "The Orbital Paradox",
+        paradoxFormula: "Lower orbit → Faster!",
+        executeBtnText: "EXECUTE MANEUVER",
+        resetBtnText: "RESET",
+        hintBtnText: "HINT (-5)",
+        keyExecute: "Execute",
+        keyPause: "Pause",
+        keyReset: "Reset",
+        keyHint: "Hint",
+        pauseTitle: "PAUSED",
+        pauseSubtitle: "Time for orbital calculations!",
+        pauseOrbit: "Current orbit:",
+        pauseDistance: "Distance to target:",
+        resumeBtnText: "RESUME",
+        scoreStatLabel: "SCORE",
+        attemptsStatLabel: "ATTEMPTS",
+        distanceStatLabel: "DEVIATION (km)",
+        analysisTitle: "📊 ORBITAL MECHANICS ANALYSIS",
+        theoreticalLabel: "Optimal Δv:",
+        actualLabel: "Applied Δv:",
+        errorLabel: "Final deviation:",
+        nextBtnText: "CONTINUE TO MARS",
+        retryBtnText: "TRY AGAIN",
+        briefingLabel1: "Orbital Altitude",
+        briefingLabel2: "Orbital Period",
+        briefingLabel3: "Distance to Target",
+        briefingLabel4: "Target Deviation",
+        footerInfo: "Earth Orbit — 400 km | ISS Altitude",
+        behind: "behind",
+        ahead: "ahead",
+        cinematicScene: `
+          <div class="scene-direction">[Atlas-7 — Earth Orbit, 400 km]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker tanaka">DR. TANAKA:</span>
+            <span class="scene-text">"Calculator, the Prometheus is <span class="emphasis">50 km ahead of you</span> in the same orbit. You need to catch it."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"Warning: Orbital mechanics is <span class="paradox">PARADOXICAL</span>. If you accelerate, you'll rise to a higher orbit and go <span class="emphasis">slower</span>."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker luna">LUNA CHEN:</span>
+            <span class="scene-text">"Wait... to catch something ahead of me, I need to... brake?"</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker player">YOU:</span>
+            <span class="scene-text">"T² ∝ r³... Lower orbit = Shorter period = Faster. Yes, I need to brake."</span>
+          </div>
+        `,
+        dialogueReady: "The <span class='paradox'>orbital paradox</span>: To catch something ahead of you, you need to <span class='highlight'>brake</span>!",
+        dialogueExecuting: "Maneuver in progress... Orbit changing!",
+        dialogueClosing: "Closing in! The lower orbit makes you faster!",
+        dialogueSuccess: "Perfect docking! Orbital mechanics isn't so paradoxical after all!",
+        dialogueFail: "Missed the target! Your orbit wasn't correct.",
+        dialogueWrongWay: "Going the wrong way! You're moving away from the target!",
+        dialogueHint: "Hint: Brake (Δv < 0) to drop to a lower orbit. There you'll move faster and catch the target!",
+        resultGold: "PERFECT DOCKING!",
+        resultSilver: "GOOD APPROACH!",
+        resultBronze: "RENDEZVOUS SUCCESSFUL",
+        resultFail: "RENDEZVOUS FAILED",
+        endSuccess: `
+          <div class="scene-direction">[Atlas-7 docked with Prometheus]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Atlas-7, I see you in the airlock. Calculator... you saved us."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker luna">LUNA:</span>
+            <span class="scene-text">"The 'brake to speed up'... now I get it! It's like running on the inside of a track!"</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker tanaka">DR. TANAKA:</span>
+            <span class="scene-text">"Excellent, Calculator. The crew is safe. Now... Mars awaits."</span>
+          </div>
+        `,
+        endFail: `
+          <div class="scene-direction">[Atlas-7 — Failed approach]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"Rendezvous failed. Target is moving away."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Atlas-7... we're losing you on radar..."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker tanaka">DR. TANAKA:</span>
+            <span class="scene-text">"Try again. Remember: lower orbit = faster."</span>
+          </div>
+        `
+      },
+      it: {
+        langLabel: "SELEZIONA LINGUA",
+        introTitle: "APPUNTAMENTO ORBITALE",
+        headerTitle: "ORBITAL RENDEZVOUS",
+        startBtnText: "INIZIA MISSIONE",
+        backText: "INDIETRO",
+        attemptsLabel: "TENTATIVI",
+        scoreLabelHeader: "PUNTEGGIO",
+        hintsLabel: "HINTS",
+        missionDataTitle: "DATI ORBITALI",
+        orbitLabel: "Orbita Atlas-7:",
+        targetOrbitLabel: "Orbita Prometheus:",
+        distanceLabel: "Distanza:",
+        periodLabel: "Periodo:",
+        maneuverTitle: "MANOVRA",
+        deltaVLabel: "Cambio Velocità (Δv):",
+        deltaVHint: "Negativo = Frena (orbita più bassa)<br>Positivo = Accelera (orbita più alta)",
+        physicsTitle: "LEGGI DI KEPLERO",
+        formulaNote1: "3ª Legge di Keplero",
+        formulaNote2: "Il Paradosso Orbitale",
+        paradoxFormula: "Orbita bassa → Più veloce!",
+        executeBtnText: "ESEGUI MANOVRA",
+        resetBtnText: "RESETTA",
+        hintBtnText: "SUGGERIMENTO (-5)",
+        keyExecute: "Esegui",
+        keyPause: "Pausa",
+        keyReset: "Resetta",
+        keyHint: "Sugger.",
+        pauseTitle: "PAUSA",
+        pauseSubtitle: "Tempo per calcoli orbitali!",
+        pauseOrbit: "Orbita attuale:",
+        pauseDistance: "Distanza dal bersaglio:",
+        resumeBtnText: "RIPRENDI",
+        scoreStatLabel: "PUNTEGGIO",
+        attemptsStatLabel: "TENTATIVI",
+        distanceStatLabel: "DEVIAZIONE (km)",
+        analysisTitle: "📊 ANALISI MECCANICA ORBITALE",
+        theoreticalLabel: "Δv ottimale:",
+        actualLabel: "Δv applicato:",
+        errorLabel: "Deviazione finale:",
+        nextBtnText: "CONTINUA SU MARTE",
+        retryBtnText: "RIPROVA",
+        briefingLabel1: "Altitudine Orbitale",
+        briefingLabel2: "Periodo Orbitale",
+        briefingLabel3: "Distanza dal Bersaglio",
+        briefingLabel4: "Deviazione Target",
+        footerInfo: "Orbita Terrestre — 400 km | Altitudine ISS",
+        behind: "dietro",
+        ahead: "davanti",
+        cinematicScene: `
+          <div class="scene-direction">[Atlas-7 — Orbita Terrestre, 400 km]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker tanaka">DR. TANAKA:</span>
+            <span class="scene-text">"Calculator, il Prometheus è <span class="emphasis">50 km davanti a te</span> nella stessa orbita. Devi raggiungerlo."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"Avvertimento: La meccanica orbitale è <span class="paradox">PARADOSSALE</span>. Se acceleri, salirai su un'orbita più alta e andrai <span class="emphasis">più lento</span>."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker luna">LUNA CHEN:</span>
+            <span class="scene-text">"Aspetta... per raggiungere qualcosa davanti a me, devo... frenare?"</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker player">TU:</span>
+            <span class="scene-text">"T² ∝ r³... Orbita più bassa = Periodo più corto = Più veloce. Sì, devo frenare."</span>
+          </div>
+        `,
+        dialogueReady: "Il <span class='paradox'>paradosso orbitale</span>: Per raggiungere qualcosa davanti a te, devi <span class='highlight'>frenare</span>!",
+        dialogueExecuting: "Manovra in corso... L'orbita sta cambiando!",
+        dialogueClosing: "Ti avvicini! L'orbita più bassa ti rende più veloce!",
+        dialogueSuccess: "Docking perfetto! La meccanica orbitale non è poi così paradossale!",
+        dialogueFail: "Bersaglio mancato! La tua orbita non era corretta.",
+        dialogueWrongWay: "Stai andando nella direzione sbagliata! Ti stai allontanando dal bersaglio!",
+        dialogueHint: "Suggerimento: Frena (Δv < 0) per scendere su un'orbita più bassa. Lì ti muoverai più veloce e raggiungerai il bersaglio!",
+        resultGold: "DOCKING PERFETTO!",
+        resultSilver: "BUON AVVICINAMENTO!",
+        resultBronze: "RENDEZVOUS RIUSCITO",
+        resultFail: "RENDEZVOUS FALLITO",
+        endSuccess: `
+          <div class="scene-direction">[Atlas-7 agganciato al Prometheus]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Atlas-7, ti vedo nell'airlock. Calculator... ci hai salvati."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker luna">LUNA:</span>
+            <span class="scene-text">"Il 'frena per accelerare'... ora capisco! È come correre all'interno di una pista!"</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker tanaka">DR. TANAKA:</span>
+            <span class="scene-text">"Eccellente, Calculator. L'equipaggio è al sicuro. Ora... Marte ci aspetta."</span>
+          </div>
+        `,
+        endFail: `
+          <div class="scene-direction">[Atlas-7 — Avvicinamento fallito]</div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker newton">NEWTON:</span>
+            <span class="scene-text">"Rendezvous fallito. Il bersaglio si sta allontanando."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker vega">COMMANDER VEGA:</span>
+            <span class="scene-text">"Atlas-7... vi stiamo perdendo sul radar..."</span>
+          </div>
+          <div class="scene-dialogue">
+            <span class="scene-speaker tanaka">DR. TANAKA:</span>
+            <span class="scene-text">"Riprova. Ricorda: orbita più bassa = più veloce."</span>
+          </div>
+        `
+      },
+      es: {
+        introTitle: "ENCUENTRO ORBITAL", headerTitle: "ENCUENTRO ORBITAL", startBtnText: "INICIAR", backText: "ATRÁS",
+        attemptsLabel: "INTENTOS", scoreLabel: "PUNTOS", hintsLabel: "PISTAS",
+        orbitLabel: "Órbita Atlas-7:", targetOrbitLabel: "Órbita Prometheus:", distanceLabel: "Distancia:", periodLabel: "Período:",
+        deltaVLabel: "Cambio de velocidad (Δv):", deltaVHint: "Negativo = Frenar<br>Positivo = Acelerar",
+        executeBtnText: "EJECUTAR", resetBtnText: "REINICIAR", hintBtnText: "PISTA (-5)",
+        dialogueReady: "Ajusta Δv para interceptar el objetivo.",
+        dialogueHint: "Pista: Frena (Δv < 0) para caer a órbita más baja. Ahí irás más rápido y alcanzarás el objetivo!",
+        dialogueSuccess: "¡Encuentro perfecto!", dialogueFail: "¡Encuentro fallido!",
+        resultGold: "¡ENCUENTRO PERFECTO!", resultFail: "MISIÓN FALLIDA", ahead: "adelante", behind: "atrás",
+        footerInfo: "Órbita Terrestre | 3er Ley de Kepler"
+      },
+      de: {
+        introTitle: "ORBITALTREFFEN", headerTitle: "ORBITALTREFFEN", startBtnText: "START", backText: "ZURÜCK",
+        attemptsLabel: "VERSUCHE", scoreLabel: "PUNKTE", hintsLabel: "HINWEISE",
+        orbitLabel: "Atlas-7 Orbit:", targetOrbitLabel: "Prometheus Orbit:", distanceLabel: "Entfernung:", periodLabel: "Periode:",
+        deltaVLabel: "Geschwindigkeitsänderung (Δv):", deltaVHint: "Negativ = Bremsen<br>Positiv = Beschleunigen",
+        executeBtnText: "AUSFÜHREN", resetBtnText: "NEUSTART", hintBtnText: "HINWEIS (-5)",
+        dialogueReady: "Stelle Δv ein um das Ziel abzufangen.",
+        dialogueHint: "Hinweis: Bremse (Δv < 0) um in niedrigere Umlaufbahn zu fallen. Dort bist du schneller und holst das Ziel ein!",
+        dialogueSuccess: "Perfektes Treffen!", dialogueFail: "Treffen fehlgeschlagen!",
+        resultGold: "PERFEKTES TREFFEN!", resultFail: "MISSION FEHLGESCHLAGEN", ahead: "voraus", behind: "hinter",
+        footerInfo: "Erdumlaufbahn | Keplers 3. Gesetz"
+      },
+      fr: {
+        introTitle: "RENDEZ-VOUS ORBITAL", headerTitle: "RENDEZ-VOUS ORBITAL", startBtnText: "DÉMARRER", backText: "RETOUR",
+        attemptsLabel: "ESSAIS", scoreLabel: "SCORE", hintsLabel: "INDICES",
+        orbitLabel: "Orbite Atlas-7:", targetOrbitLabel: "Orbite Prometheus:", distanceLabel: "Distance:", periodLabel: "Période:",
+        deltaVLabel: "Changement de vitesse (Δv):", deltaVHint: "Négatif = Freiner<br>Positif = Accélérer",
+        executeBtnText: "EXÉCUTER", resetBtnText: "RECOMMENCER", hintBtnText: "INDICE (-5)",
+        dialogueReady: "Ajuste Δv pour intercepter la cible.",
+        dialogueHint: "Indice: Freine (Δv < 0) pour tomber sur une orbite plus basse. Tu iras plus vite et rattraperas la cible!",
+        dialogueSuccess: "Rendez-vous parfait!", dialogueFail: "Rendez-vous échoué!",
+        resultGold: "RENDEZ-VOUS PARFAIT!", resultFail: "MISSION ÉCHOUÉE", ahead: "devant", behind: "derrière",
+        footerInfo: "Orbite Terrestre | 3e Loi de Kepler"
+      },
+      bg: {
+        introTitle: "ОРБИТАЛНА СРЕЩА", headerTitle: "ОРБИТАЛНА СРЕЩА", startBtnText: "СТАРТ", backText: "НАЗАД",
+        attemptsLabel: "ОПИТИ", scoreLabel: "ТОЧКИ", hintsLabel: "ПОДСКАЗКИ",
+        orbitLabel: "Орбита Atlas-7:", targetOrbitLabel: "Орбита Prometheus:", distanceLabel: "Разстояние:", periodLabel: "Период:",
+        deltaVLabel: "Промяна на скорост (Δv):", deltaVHint: "Отрицателно = Спиране<br>Положително = Ускоряване",
+        executeBtnText: "ИЗПЪЛНИ", resetBtnText: "РЕСТАРТ", hintBtnText: "ПОДСКАЗКА (-5)",
+        dialogueReady: "Настрой Δv за прехващане на целта.",
+        dialogueHint: "Подсказка: Спирай (Δv < 0) за да паднеш на по-ниска орбита. Там ще си по-бърз и ще настигнеш целта!",
+        dialogueSuccess: "Перфектна среща!", dialogueFail: "Срещата се провали!",
+        resultGold: "ПЕРФЕКТНА СРЕЩА!", resultFail: "МИСИЯТА ПРОВАЛЕНА", ahead: "напред", behind: "назад",
+        footerInfo: "Земна Орбита | 3-ти Закон на Кеплер"
+      },
+      pt: {
+        introTitle: "ENCONTRO ORBITAL", headerTitle: "ENCONTRO ORBITAL", startBtnText: "INICIAR", backText: "VOLTAR",
+        attemptsLabel: "TENTATIVAS", scoreLabel: "PONTOS", hintsLabel: "DICAS",
+        orbitLabel: "Órbita Atlas-7:", targetOrbitLabel: "Órbita Prometheus:", distanceLabel: "Distância:", periodLabel: "Período:",
+        deltaVLabel: "Mudança de velocidade (Δv):", deltaVHint: "Negativo = Frear<br>Positivo = Acelerar",
+        executeBtnText: "EXECUTAR", resetBtnText: "REINICIAR", hintBtnText: "DICA (-5)",
+        dialogueReady: "Ajuste Δv para interceptar o alvo.",
+        dialogueHint: "Dica: Freie (Δv < 0) para cair em órbita mais baixa. Lá você será mais rápido e alcançará o alvo!",
+        dialogueSuccess: "Encontro perfeito!", dialogueFail: "Encontro falhou!",
+        resultGold: "ENCONTRO PERFEITO!", resultFail: "MISSÃO FALHOU", ahead: "à frente", behind: "atrás",
+        footerInfo: "Órbita Terrestre | 3ª Lei de Kepler"
+      },
+      fi: {
+        introTitle: "KIERTORATAKOHAAMINEN", headerTitle: "KIERTORATAKOHAAMINEN", startBtnText: "ALOITA", backText: "TAKAISIN",
+        attemptsLabel: "YRITYKSET", scoreLabel: "PISTEET", hintsLabel: "VIHJEET",
+        orbitLabel: "Atlas-7 rata:", targetOrbitLabel: "Prometheus rata:", distanceLabel: "Etäisyys:", periodLabel: "Jakso:",
+        deltaVLabel: "Nopeuden muutos (Δv):", deltaVHint: "Negatiivinen = Jarruta<br>Positiivinen = Kiihdytä",
+        executeBtnText: "SUORITA", resetBtnText: "ALUSTA", hintBtnText: "VIHJE (-5)",
+        dialogueReady: "Säädä Δv kohteen sieppaamiseksi.",
+        dialogueHint: "Vihje: Jarruta (Δv < 0) pudotaksesi matalammalle radalle. Siellä olet nopeampi ja saavutat kohteen!",
+        dialogueSuccess: "Täydellinen kohtaaminen!", dialogueFail: "Kohtaaminen epäonnistui!",
+        resultGold: "TÄYDELLINEN KOHTAAMINEN!", resultFail: "TEHTÄVÄ EPÄONNISTUI", ahead: "edellä", behind: "takana",
+        footerInfo: "Maan Kiertorata | Keplerin 3. Laki"
+      }
+    };
+
+    /* ===== STATE ===== */
+    let state = {
+      language: 'en',
+      phase: 'intro',
+      attempts: 0,
+      score: 100,
+      hintsUsed: 0,
+      playerOrbit: 400,
+      targetOrbit: 400,
+      playerAngle: 0,
+      targetAngle: 50 / (2 * Math.PI * 6771) * 360,
+      deltaV: 0,
+      appliedDeltaV: 0,
+      simTime: 0,
+      success: false,
+      finalDistance: 0,
+      BASE_ORBIT: 400,
+      EARTH_RADIUS: 6371,
+      TARGET_DISTANCE: 50,
+      SUCCESS_THRESHOLD: 5
+    };
+
+    const $ = id => document.getElementById(id);
+    const $$ = sel => document.querySelectorAll(sel);
+    const canvas = $('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function t(key) { return I18N[state.language][key] || I18N.el[key] || key; }
+
+    function setLanguage(lang) {
+      state.language = lang;
+      $$('.lang-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
+      $$('.lang-option').forEach(opt => opt.classList.toggle('active', opt.dataset.lang === lang));
+      updateAllText();
+      localStorage.setItem('atlas_language', lang);
+    }
+
+    function updateAllText() {
+      $('langLabel').textContent = t('langLabel');
+      $('introTitle').textContent = t('introTitle');
+      $('cinematicScene').innerHTML = t('cinematicScene');
+      $('startBtnText').textContent = t('startBtnText');
+      $('briefingLabel1').textContent = t('briefingLabel1');
+      $('briefingLabel2').textContent = t('briefingLabel2');
+      $('briefingLabel3').textContent = t('briefingLabel3');
+      $('briefingLabel4').textContent = t('briefingLabel4');
+      $('headerTitle').textContent = t('headerTitle');
+      $('backText').textContent = t('backText');
+      $('attemptsLabel').textContent = t('attemptsLabel');
+      $('scoreLabelHeader').textContent = t('scoreLabelHeader');
+      $('hintsLabel').textContent = t('hintsLabel');
+      $('missionDataTitle').textContent = t('missionDataTitle');
+      $('orbitLabel').textContent = t('orbitLabel');
+      $('targetOrbitLabel').textContent = t('targetOrbitLabel');
+      $('distanceLabel').textContent = t('distanceLabel');
+      $('periodLabel').textContent = t('periodLabel');
+      $('maneuverTitle').textContent = t('maneuverTitle');
+      $('deltaVLabel').textContent = t('deltaVLabel');
+      $('deltaVHint').innerHTML = t('deltaVHint');
+      $('physicsTitle').textContent = t('physicsTitle');
+      $('formulaNote1').textContent = t('formulaNote1');
+      $('formulaNote2').textContent = t('formulaNote2');
+      $('paradoxFormula').textContent = t('paradoxFormula');
+      $('executeBtnText').textContent = t('executeBtnText');
+      $('resetBtnText').textContent = t('resetBtnText');
+      $('hintBtnText').textContent = t('hintBtnText');
+      $('keyExecute').textContent = t('keyExecute');
+      $('keyPause').textContent = t('keyPause');
+      $('keyReset').textContent = t('keyReset');
+      $('keyHint').textContent = t('keyHint');
+      $('pauseTitle').textContent = t('pauseTitle');
+      $('pauseSubtitle').textContent = t('pauseSubtitle');
+      $('pauseOrbit').textContent = t('pauseOrbit');
+      $('pauseDistance').textContent = t('pauseDistance');
+      $('resumeBtnText').textContent = t('resumeBtnText');
+      $('scoreStatLabel').textContent = t('scoreStatLabel');
+      $('attemptsStatLabel').textContent = t('attemptsStatLabel');
+      $('distanceStatLabel').textContent = t('distanceStatLabel');
+      $('analysisTitle').textContent = t('analysisTitle');
+      $('theoreticalLabel').textContent = t('theoreticalLabel');
+      $('actualLabel').textContent = t('actualLabel');
+      $('errorLabel').textContent = t('errorLabel');
+      $('nextBtnText').textContent = t('nextBtnText');
+      $('retryBtnText').textContent = t('retryBtnText');
+      $('footerInfo').textContent = t('footerInfo');
+      $('dialogueText').innerHTML = t('dialogueReady');
+    }
+
+    function resizeCanvas() {
+      const wrapper = canvas.parentElement;
+      canvas.width = wrapper.clientWidth;
+      canvas.height = wrapper.clientHeight;
+    }
+
+    function render() {
+      const W = canvas.width, H = canvas.height;
+      ctx.fillStyle = '#0a0a1a';
+      ctx.fillRect(0, 0, W, H);
+      drawStars(W, H);
+      drawEarth(W, H);
+      drawOrbits(W, H);
+      drawSpacecraft(W, H);
+      drawInfo(W, H);
+    }
+
+    function drawStars(W, H) {
+      ctx.fillStyle = 'white';
+      for (let i = 0; i < 100; i++) {
+        const x = (i * 137.5) % W;
+        const y = (i * 73.3) % H;
+        ctx.beginPath();
+        ctx.arc(x, y, Math.random() * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawEarth(W, H) {
+      const cx = W / 2, cy = H / 2;
+      const earthR = Math.min(W, H) * 0.15;
+      
+      const glow = ctx.createRadialGradient(cx, cy, earthR * 0.8, cx, cy, earthR * 1.5);
+      glow.addColorStop(0, 'rgba(67, 97, 238, 0.4)');
+      glow.addColorStop(1, 'transparent');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, earthR * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      const earthGrad = ctx.createRadialGradient(cx - earthR * 0.3, cy - earthR * 0.3, 0, cx, cy, earthR);
+      earthGrad.addColorStop(0, '#6eb5ff');
+      earthGrad.addColorStop(0.5, '#4361ee');
+      earthGrad.addColorStop(1, '#1a237e');
+      ctx.fillStyle = earthGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, earthR, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = 'rgba(34, 139, 34, 0.5)';
+      ctx.beginPath();
+      ctx.ellipse(cx - earthR * 0.2, cy - earthR * 0.1, earthR * 0.3, earthR * 0.2, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawOrbits(W, H) {
+      const cx = W / 2, cy = H / 2;
+      const scale = Math.min(W, H) * 0.0003;
+      
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      const targetR = (state.EARTH_RADIUS + state.targetOrbit) * scale;
+      ctx.beginPath();
+      ctx.arc(cx, cy, targetR, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      ctx.strokeStyle = 'rgba(78, 205, 196, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
+      const playerR = (state.EARTH_RADIUS + state.playerOrbit) * scale;
+      ctx.beginPath();
+      ctx.arc(cx, cy, playerR, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    function drawSpacecraft(W, H) {
+      const cx = W / 2, cy = H / 2;
+      const scale = Math.min(W, H) * 0.0003;
+      
+      const targetR = (state.EARTH_RADIUS + state.targetOrbit) * scale;
+      const targetRad = state.targetAngle * Math.PI / 180;
+      const targetX = cx + targetR * Math.cos(targetRad);
+      const targetY = cy - targetR * Math.sin(targetRad);
+      
+      ctx.fillStyle = '#e63946';
+      ctx.shadowColor = '#e63946';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(targetX, targetY, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = '10px monospace';
+      ctx.fillText('PROMETHEUS', targetX + 12, targetY + 4);
+      
+      const playerR = (state.EARTH_RADIUS + state.playerOrbit) * scale;
+      const playerRad = state.playerAngle * Math.PI / 180;
+      const playerX = cx + playerR * Math.cos(playerRad);
+      const playerY = cy - playerR * Math.sin(playerRad);
+      
+      ctx.fillStyle = '#4ecdc4';
+      ctx.shadowColor = '#4ecdc4';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(playerX, playerY, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      
+      ctx.fillStyle = '#fff';
+      ctx.fillText('ATLAS-7', playerX + 14, playerY + 4);
+    }
+
+    function drawInfo(W, H) {
+      const distance = calculateDistance();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px monospace';
+      ctx.textAlign = 'center';
+      
+      if (state.phase === 'simulating') {
+        ctx.fillText(`Απόσταση: ${distance.toFixed(1)} km`, W / 2, 30);
+      }
+      ctx.textAlign = 'left';
+    }
+
+    function calculateDistance() {
+      const angleDiff = state.targetAngle - state.playerAngle;
+      const avgR = state.EARTH_RADIUS + (state.playerOrbit + state.targetOrbit) / 2;
+      return angleDiff * Math.PI / 180 * avgR;
+    }
+
+    function calculatePeriod(orbitHeight) {
+      const r = state.EARTH_RADIUS + orbitHeight;
+      const GM = 3.986e14;
+      return 2 * Math.PI * Math.sqrt(Math.pow(r * 1000, 3) / GM) / 60;
+    }
+
+    function calculateAngularVelocity(orbitHeight) {
+      const period = calculatePeriod(orbitHeight);
+      return 360 / (period * 60);
+    }
+
+    function updatePhysics(dt) {
+      if (state.phase !== 'simulating') return;
+      
+      state.simTime += dt;
+      
+      const playerOmega = calculateAngularVelocity(state.playerOrbit);
+      const targetOmega = calculateAngularVelocity(state.targetOrbit);
+      
+      state.playerAngle += playerOmega * dt;
+      state.targetAngle += targetOmega * dt;
+      
+      const distance = calculateDistance();
+      
+      if (Math.abs(distance) < state.SUCCESS_THRESHOLD) {
+        state.phase = 'success';
+        state.success = true;
+        state.finalDistance = Math.abs(distance);
+        $('dialogueText').innerHTML = t('dialogueSuccess');
+        setTimeout(showEndScreen, 1500);
+      } else if (state.simTime > 180) {
+        state.phase = 'failed';
+        state.success = false;
+        state.finalDistance = Math.abs(distance);
+        $('dialogueText').innerHTML = t('dialogueFail');
+        setTimeout(showEndScreen, 1500);
+      } else if (distance > state.TARGET_DISTANCE + 20) {
+        $('dialogueText').innerHTML = t('dialogueWrongWay');
+      } else if (distance < state.TARGET_DISTANCE - 10) {
+        $('dialogueText').innerHTML = t('dialogueClosing');
+      }
+      
+      updateDataDisplay();
+    }
+
+    function updateDataDisplay() {
+      $('orbitValue').textContent = `${state.playerOrbit.toFixed(0)} km`;
+      $('targetOrbitValue').textContent = `${state.targetOrbit.toFixed(0)} km`;
+      
+      const distance = calculateDistance();
+      const distanceText = distance > 0 ? `${distance.toFixed(1)} km ${t('ahead')}` : `${Math.abs(distance).toFixed(1)} km ${t('behind')}`;
+      $('distanceValue').textContent = distanceText;
+      
+      const period = calculatePeriod(state.playerOrbit);
+      $('periodValue').textContent = `${period.toFixed(1)} min`;
+    }
+
+    function startGame() {
+      state.phase = 'ready';
+      $('introModal').classList.add('hidden');
+      $('executeBtn').disabled = false;
+      $('dialogueText').innerHTML = t('dialogueReady');
+    }
+
+    function executeManeuver() {
+      if (state.phase !== 'ready') return;
+      
+      state.attempts++;
+      state.deltaV = parseInt($('deltaVSlider').value);
+      state.appliedDeltaV = state.deltaV;
+      
+      state.playerOrbit = state.BASE_ORBIT + state.deltaV * 0.5;
+      state.playerOrbit = Math.max(200, Math.min(600, state.playerOrbit));
+      
+      state.phase = 'simulating';
+      state.simTime = 0;
+      
+      $('executeBtn').disabled = true;
+      $('resetBtn').disabled = false;
+      $('attemptsDisplay').textContent = state.attempts;
+      $('dialogueText').innerHTML = t('dialogueExecuting');
+    }
+
+    function resetGame() {
+      state.phase = 'ready';
+      state.playerOrbit = state.BASE_ORBIT;
+      state.playerAngle = 0;
+      state.targetAngle = state.TARGET_DISTANCE / (2 * Math.PI * (state.EARTH_RADIUS + state.BASE_ORBIT)) * 360;
+      state.simTime = 0;
+      $('deltaVSlider').value = 0;
+      $('deltaVDisplay').textContent = '0 m/s';
+      $('executeBtn').disabled = false;
+      updateDataDisplay();
+      $('dialogueText').innerHTML = t('dialogueReady');
+    }
+
+    function togglePause() {
+      if (state.phase === 'simulating') {
+        state.previousPhase = state.phase;
+        state.phase = 'paused';
+        $('pauseOverlay').classList.add('active');
+        $('pauseOrbitValue').textContent = `${state.playerOrbit.toFixed(0)} km`;
+        $('pauseDistanceValue').textContent = `${calculateDistance().toFixed(1)} km`;
+      } else if (state.phase === 'paused') {
+        state.phase = state.previousPhase;
+        $('pauseOverlay').classList.remove('active');
+      }
+    }
+
+    function giveHint() {
+      if (state.hintsUsed >= 3) return;
+      state.hintsUsed++;
+      state.score = Math.max(0, state.score - 5);
+      $('hintsDisplay').textContent = state.hintsUsed;
+      $('scoreDisplay').textContent = state.score;
+      $('dialogueText').innerHTML = t('dialogueHint');
+    }
+
+    function showEndScreen() {
+      const attemptScore = Math.max(0, 100 - (state.attempts - 1) * 15);
+      const accuracyScore = state.success ? Math.max(0, 100 - state.finalDistance * 10) : 0;
+      const hintPenalty = state.hintsUsed * 5;
+      const finalScore = Math.round(0.7 * attemptScore + 0.3 * accuracyScore - hintPenalty);
+      state.score = Math.max(0, finalScore);
+      
+      let medal, resultClass, resultText;
+      if (!state.success) {
+        medal = '💔'; resultClass = 'fail'; resultText = t('resultFail');
+      } else if (state.finalDistance < 1) {
+        medal = '🥇'; resultClass = 'gold'; resultText = t('resultGold');
+      } else if (state.finalDistance < 3) {
+        medal = '🥈'; resultClass = 'silver'; resultText = t('resultSilver');
+      } else {
+        medal = '🥉'; resultClass = 'bronze'; resultText = t('resultBronze');
+      }
+      
+      $('resultMedal').textContent = medal;
+      $('resultTitle').textContent = resultText;
+      $('resultTitle').className = `result-title ${resultClass}`;
+      $('finalScore').textContent = state.score;
+      $('finalAttempts').textContent = state.attempts;
+      $('finalDistance').textContent = state.finalDistance.toFixed(1);
+      
+      $('theoreticalV').textContent = '-50 to -100 m/s';
+      $('actualV').textContent = `${state.appliedDeltaV} m/s`;
+      $('errorValue').textContent = `${state.finalDistance.toFixed(1)} km`;
+      $('errorValue').className = `analysis-value ${state.finalDistance < 3 ? 'good' : 'error'}`;
+      
+      $('endCinematic').innerHTML = state.success ? t('endSuccess') : t('endFail');
+      $('nextMissionBtn').style.display = state.success ? 'block' : 'none';
+      $('endModal').classList.remove('hidden');
+      
+      saveProgress();
+    }
+
+    function saveProgress() {
+      const medal = state.success ? (state.finalDistance < 1 ? 'gold' : state.finalDistance < 3 ? 'silver' : 'bronze') : null;
+      localStorage.setItem('atlas_game2_completed', state.success ? 'true' : 'false');
+      localStorage.setItem('atlas_game2_medal', medal);
+      localStorage.setItem('atlas_game2_score', state.score);
+    }
+
+    function goToNextMission() { window.location.href = 'mars_cargo_drop.html'; }
+    function retryGame() {
+      $('endModal').classList.add('hidden');
+      state.attempts = 0;
+      state.hintsUsed = 0;
+      state.score = 100;
+      $('attemptsDisplay').textContent = '0';
+      $('hintsDisplay').textContent = '0';
+      $('scoreDisplay').textContent = '100';
+      resetGame();
+    }
+    function goBack() { window.location.href = 'index.html'; }
+
+    function setupSliders() {
+      $('deltaVSlider').addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        $('deltaVDisplay').textContent = `${val} m/s`;
+      });
+    }
+
+    function setupKeyboard() {
+      document.addEventListener('keydown', (e) => {
+        switch(e.code) {
+          case 'Space': case 'Enter': e.preventDefault(); if (state.phase === 'ready') executeManeuver(); break;
+          case 'KeyP': togglePause(); break;
+          case 'KeyR': if (state.phase !== 'intro') resetGame(); break;
+          case 'KeyH': giveHint(); break;
+        }
+      });
+    }
+
+    let lastTime = 0;
+    function gameLoop(timestamp) {
+      const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+      lastTime = timestamp;
+      if (state.phase !== 'paused') updatePhysics(dt);
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function init() {
+      const savedLang = localStorage.getItem('atlas_language');
+      if (savedLang) setLanguage(savedLang);
+      
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      setupSliders();
+      setupKeyboard();
+      
+      $('startGameBtn').addEventListener('click', startGame);
+      $('executeBtn').addEventListener('click', executeManeuver);
+      $('resetBtn').addEventListener('click', resetGame);
+      $('hintBtn').addEventListener('click', giveHint);
+      $('nextMissionBtn').addEventListener('click', goToNextMission);
+      $('retryBtn').addEventListener('click', retryGame);
+      
+      state.targetAngle = state.TARGET_DISTANCE / (2 * Math.PI * (state.EARTH_RADIUS + state.BASE_ORBIT)) * 360;
+      
+      updateAllText();
+      updateDataDisplay();
+      requestAnimationFrame(gameLoop);
+      console.log('🛰️ ORBITAL RENDEZVOUS initialized');
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
