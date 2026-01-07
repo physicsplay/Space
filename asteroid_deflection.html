@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>☄️ ASTEROID DEFLECTION — Mission ATLAS Act 7</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --void-black: #030308; --deep-space: #0a0a1a; --asteroid-brown: #8b4513;
+      --impact-orange: #ff6b35; --warning-red: #e63946; --success-green: #06d6a0;
+      --gold: #ffd60a; --silver: #c0c0c0; --bronze: #cd7f32; --moon-gray: #888899;
+      --font-display: 'Courier New', monospace; --font-body: 'Segoe UI', sans-serif;
+      --space-xs: 0.25rem; --space-sm: 0.5rem; --space-md: 1rem; --space-lg: 2rem;
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: var(--font-body); background: var(--void-black); color: #f0f4ff; }
+    .game-container { display: grid; grid-template-columns: 1fr 350px; grid-template-rows: auto 1fr auto; height: 100vh; }
+    @media (max-width: 900px) { .game-container { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; } }
+    .header { grid-column: 1 / -1; background: rgba(10,10,26,0.95); padding: var(--space-sm) var(--space-md); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,107,53,0.3); }
+    .header-left { display: flex; align-items: center; gap: var(--space-md); }
+    .back-btn { background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.3); border-radius: 8px; padding: var(--space-sm) var(--space-md); color: var(--impact-orange); cursor: pointer; }
+    .game-title { font-family: var(--font-display); font-size: 1.2rem; }
+    .game-title .act { color: var(--gold); font-size: 0.8rem; }
+    .header-center { display: flex; gap: var(--space-lg); }
+    .stat-box { text-align: center; }
+    .stat-value { font-family: var(--font-display); font-size: 1.3rem; font-weight: bold; }
+    .stat-value.attempts { color: var(--impact-orange); }
+    .stat-value.score { color: var(--gold); }
+    .stat-label { font-size: 0.7rem; color: var(--moon-gray); text-transform: uppercase; }
+    .header-right { display: flex; gap: var(--space-sm); }
+    .lang-btn { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; padding: var(--space-xs) var(--space-sm); font-size: 1rem; cursor: pointer; }
+    .lang-btn:hover, .lang-btn.active { background: rgba(255,214,10,0.2); border-color: var(--gold); }
+    .canvas-wrapper { background: var(--deep-space); overflow: hidden; }
+    #gameCanvas { display: block; width: 100%; height: 100%; }
+    .control-panel { background: rgba(20,15,30,0.98); padding: var(--space-md); overflow-y: auto; border-left: 1px solid rgba(255,107,53,0.2); display: flex; flex-direction: column; gap: var(--space-md); }
+    @media (max-width: 900px) { .control-panel { max-height: 40vh; } }
+    .panel-section { background: rgba(0,0,0,0.3); border-radius: 12px; padding: var(--space-md); border: 1px solid rgba(255,107,53,0.2); }
+    .section-title { font-family: var(--font-display); font-size: 0.85rem; color: var(--impact-orange); margin-bottom: var(--space-sm); }
+    .data-row { display: flex; justify-content: space-between; padding: var(--space-xs) 0; font-size: 0.85rem; }
+    .data-label { color: var(--moon-gray); }
+    .data-value { font-family: var(--font-display); }
+    .slider-group { margin-bottom: var(--space-md); }
+    .slider-header { display: flex; justify-content: space-between; margin-bottom: var(--space-xs); }
+    .slider-label { font-size: 0.85rem; color: var(--moon-gray); }
+    .slider-value { font-family: var(--font-display); color: var(--impact-orange); }
+    .slider { width: 100%; height: 8px; -webkit-appearance: none; background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--impact-orange); cursor: pointer; }
+    .formula-box { background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.3); border-radius: 8px; padding: var(--space-sm); margin-bottom: var(--space-sm); }
+    .formula { font-family: var(--font-display); font-size: 0.9rem; color: var(--impact-orange); text-align: center; }
+    .formula-note { font-size: 0.75rem; color: var(--moon-gray); text-align: center; }
+    .btn { padding: var(--space-md); border: none; border-radius: 10px; font-family: var(--font-display); font-size: 1rem; cursor: pointer; width: 100%; margin-bottom: var(--space-sm); text-transform: uppercase; }
+    .btn-primary { background: linear-gradient(135deg, #ff6b35, #e63946); color: white; }
+    .btn-primary:disabled { background: rgba(255,255,255,0.1); color: var(--moon-gray); }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+    .btn-hint { background: rgba(255,214,10,0.2); color: var(--gold); }
+    .dialogue-box { background: rgba(0,0,0,0.5); border-left: 3px solid var(--impact-orange); padding: var(--space-sm); font-size: 0.85rem; min-height: 60px; }
+    .footer { grid-column: 1 / -1; background: rgba(10,10,26,0.95); padding: var(--space-sm) var(--space-md); display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--moon-gray); }
+    .key { background: rgba(255,107,53,0.1); padding: 2px 8px; border-radius: 4px; font-family: var(--font-display); }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: var(--space-lg); }
+    .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+    .modal { max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; background: linear-gradient(135deg, rgba(20,15,30,0.98), rgba(10,10,20,0.98)); border: 2px solid var(--gold); border-radius: 20px; padding: var(--space-lg); }
+    .modal-title { font-family: var(--font-display); font-size: 1.8rem; text-align: center; margin-bottom: var(--space-md); color: var(--gold); }
+    .lang-selector-intro { display: flex; justify-content: center; gap: var(--space-md); margin-bottom: var(--space-lg); padding: var(--space-md); background: rgba(0,0,0,0.3); border-radius: 12px; }
+    .lang-option { display: flex; flex-direction: column; align-items: center; padding: var(--space-md); background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.2); border-radius: 12px; cursor: pointer; min-width: 100px; }
+    .lang-option.active { background: rgba(255,214,10,0.2); border-color: var(--gold); }
+    .lang-flag { font-size: 2.5rem; }
+    .lang-name { font-size: 0.85rem; color: var(--moon-gray); }
+    .cinematic-scene { background: rgba(0,0,0,0.5); border-radius: 12px; padding: var(--space-lg); margin-bottom: var(--space-lg); font-family: var(--font-display); font-size: 0.9rem; line-height: 1.8; }
+    .briefing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-md); margin-bottom: var(--space-lg); }
+    .briefing-item { background: rgba(0,0,0,0.3); border-radius: 10px; padding: var(--space-md); text-align: center; }
+    .briefing-icon { font-size: 2rem; }
+    .briefing-label { font-size: 0.75rem; color: var(--moon-gray); }
+    .briefing-value { font-family: var(--font-display); color: var(--impact-orange); }
+    .modal-btn { display: block; width: 100%; padding: var(--space-md); background: linear-gradient(135deg, #ffd700, #ffaa00); border: none; border-radius: 12px; font-family: var(--font-display); font-size: 1.1rem; color: #000; cursor: pointer; margin-bottom: var(--space-sm); }
+    .modal-btn.secondary { background: rgba(255,255,255,0.1); color: white; }
+    .result-display { text-align: center; margin-bottom: var(--space-lg); }
+    .result-medal { font-size: 5rem; }
+    .result-title { font-family: var(--font-display); font-size: 1.5rem; }
+    .result-title.gold { color: var(--gold); }
+    .result-title.fail { color: var(--warning-red); }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="modal-overlay" id="introModal">
+    <div class="modal">
+      <h1 class="modal-title">☄️ <span id="introTitle">ΕΚΤΡΟΠΗ ΑΣΤΕΡΟΕΙΔΟΥΣ</span></h1>
+      <div class="lang-selector-intro">
+        <div class="lang-option" data-lang="el" onclick="setLanguage('el')"><span class="lang-flag">🇬🇷</span><span class="lang-name">Ελληνικά</span></div>
+        <div class="lang-option active" data-lang="en" onclick="setLanguage('en')"><span class="lang-flag">🇬🇧</span><span class="lang-name">English</span></div>
+        <div class="lang-option" data-lang="it" onclick="setLanguage('it')"><span class="lang-flag">🇮🇹</span><span class="lang-name">Italiano</span></div>
+        <div class="lang-option" data-lang="es" onclick="setLanguage('es')"><span class="lang-flag">🇪🇸</span><span class="lang-name">Español</span></div>
+        <div class="lang-option" data-lang="bg" onclick="setLanguage('bg')"><span class="lang-flag">🇧🇬</span><span class="lang-name">Български</span></div>
+        <div class="lang-option" data-lang="pt" onclick="setLanguage('pt')"><span class="lang-flag">🇵🇹</span><span class="lang-name">Português</span></div>
+        <div class="lang-option" data-lang="de" onclick="setLanguage('de')"><span class="lang-flag">🇩🇪</span><span class="lang-name">Deutsch</span></div>
+        <div class="lang-option" data-lang="fr" onclick="setLanguage('fr')"><span class="lang-flag">🇫🇷</span><span class="lang-name">Français</span></div>
+        <div class="lang-option" data-lang="fi" onclick="setLanguage('fi')"><span class="lang-flag">🇫🇮</span><span class="lang-name">Suomi</span></div>
+      </div>
+      <div class="cinematic-scene" id="cinematicScene"></div>
+      <div class="briefing-grid">
+        <div class="briefing-item"><div class="briefing-icon">☄️</div><div class="briefing-label" id="bl1">Μάζα Αστεροειδή</div><div class="briefing-value">M = 1000 kg</div></div>
+        <div class="briefing-item"><div class="briefing-icon">🚀</div><div class="briefing-label" id="bl2">Μάζα Βλήματος</div><div class="briefing-value">m = 100 kg</div></div>
+        <div class="briefing-item"><div class="briefing-icon">➡️</div><div class="briefing-label" id="bl3">Ταχύτητα Αστεροειδή</div><div class="briefing-value">V = 50 m/s</div></div>
+        <div class="briefing-item"><div class="briefing-icon">🎯</div><div class="briefing-label" id="bl4">Στόχος Απόκλισης</div><div class="briefing-value">> 10 m/s</div></div>
+      </div>
+      <button class="modal-btn" id="startBtn">☄️ <span id="startBtnText">ΕΝΑΡΞΗ</span></button>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="endModal">
+    <div class="modal">
+      <div class="result-display">
+        <div class="result-medal" id="resultMedal">🥇</div>
+        <h2 class="result-title" id="resultTitle">ΕΠΙΤΥΧΙΑ!</h2>
+      </div>
+      <div class="cinematic-scene" id="endCinematic"></div>
+      <button class="modal-btn" id="nextBtn"><span id="nextBtnText">ΕΠΟΜΕΝΗ ΑΠΟΣΤΟΛΗ</span></button>
+      <button class="modal-btn secondary" id="retryBtn"><span id="retryBtnText">ΞΑΝΑΔΟΚΙΜΑΣΕ</span></button>
+    </div>
+  </div>
+
+  <div class="game-container">
+    <header class="header">
+      <div class="header-left">
+        <button class="back-btn" onclick="goBack()">← <span id="backText">ΠΙΣΩ</span></button>
+        <div class="game-title"><div class="act">ACT 7</div><span>ASTEROID DEFLECTION</span></div>
+      </div>
+      <div class="header-center">
+        <div class="stat-box"><div class="stat-value attempts" id="attemptsDisplay">0</div><div class="stat-label" id="attemptsLabel">ΠΡΟΣΠΑΘΕΙΕΣ</div></div>
+        <div class="stat-box"><div class="stat-value score" id="scoreDisplay">100</div><div class="stat-label" id="scoreLabel">ΒΑΘΜΟΣ</div></div>
+      </div>
+      <div class="header-right">
+        <button class="lang-btn" data-lang="el" onclick="setLanguage('el')">🇬🇷</button>
+        <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">🇬🇧</button>
+        <button class="lang-btn" data-lang="it" onclick="setLanguage('it')">🇮🇹</button>
+        <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">🇪🇸</button>
+        <button class="lang-btn" data-lang="bg" onclick="setLanguage('bg')">🇧🇬</button>
+        <button class="lang-btn" data-lang="pt" onclick="setLanguage('pt')">🇵🇹</button>
+        <button class="lang-btn" data-lang="de" onclick="setLanguage('de')">🇩🇪</button>
+        <button class="lang-btn" data-lang="fr" onclick="setLanguage('fr')">🇫🇷</button>
+        <button class="lang-btn" data-lang="fi" onclick="setLanguage('fi')">🇫🇮</button>
+      </div>
+    </header>
+    <div class="canvas-wrapper"><canvas id="gameCanvas"></canvas></div>
+    <div class="control-panel">
+      <div class="panel-section">
+        <div class="section-title" id="dataTitle">📊 ΔΕΔΟΜΕΝΑ</div>
+        <div class="data-row"><span class="data-label" id="dl1">Μάζα αστεροειδή (M):</span><span class="data-value">1000 kg</span></div>
+        <div class="data-row"><span class="data-label" id="dl2">Μάζα βλήματος (m):</span><span class="data-value">100 kg</span></div>
+        <div class="data-row"><span class="data-label" id="dl3">Ταχύτητα αστ. (V₀):</span><span class="data-value">50 m/s →</span></div>
+      </div>
+      <div class="panel-section">
+        <div class="section-title" id="controlTitle">🎯 ΕΛΕΓΧΟΣ ΒΛΗΜΑΤΟΣ</div>
+        <div class="slider-group">
+          <div class="slider-header"><span class="slider-label" id="sl1">Ταχύτητα βλήματος (v):</span><span class="slider-value" id="projVDisplay">100 m/s</span></div>
+          <input type="range" class="slider" id="projVSlider" min="50" max="300" value="100">
+        </div>
+        <div class="slider-group">
+          <div class="slider-header"><span class="slider-label" id="sl2">Γωνία πρόσκρουσης:</span><span class="slider-value" id="angleDisplay">90°</span></div>
+          <input type="range" class="slider" id="angleSlider" min="30" max="150" value="90">
+        </div>
+      </div>
+      <div class="panel-section">
+        <div class="section-title" id="physicsTitle">📐 ΔΙΑΤΗΡΗΣΗ ΟΡΜΗΣ</div>
+        <div class="formula-box"><div class="formula">p = m·v</div><div class="formula-note" id="fn1">Ορμή σώματος</div></div>
+        <div class="formula-box"><div class="formula">Σp_πριν = Σp_μετά</div><div class="formula-note" id="fn2">Διατήρηση ορμής</div></div>
+        <div class="formula-box"><div class="formula">Δv = m·v / (M+m)</div><div class="formula-note" id="fn3">Μεταβολή ταχύτητας (πλαστική)</div></div>
+      </div>
+      <div class="panel-section">
+        <button class="btn btn-primary" id="fireBtn" id="fireBtn2" onclick="fire()">🚀 <span id="fireBtnText">ΕΚΤΟΞΕΥΣΗ</span></button>
+        <button class="btn btn-secondary" id="resetBtn2" onclick="reset()">↺ <span id="resetBtnText">ΕΠΑΝΑΦΟΡΑ</span></button>
+        <button class="btn btn-hint" id="hintBtn2" onclick="hint()">💡 <span id="hintBtnText">ΥΠΟΔΕΙΞΗ</span> (-5)</button>
+      </div>
+      <div class="panel-section">
+        <div class="dialogue-box"><div class="dialogue-text" id="dialogueText">Εκτόξευσε το βλήμα για να εκτρέψεις τον αστεροειδή από την πορεία του!</div></div>
+      </div>
+    </div>
+    <footer class="footer" id="footerText">
+      <div><span class="key">SPACE</span> Εκτόξευση | <span class="key">R</span> Επαναφορά</div>
+      <div>Διαστημικός Σταθμός — Αμυντικό Σύστημα</div>
+    </footer>
+  </div>
+
+  <script>
+    const I18N = {
+      el: { 
+        introTitle: "ΕΚΤΡΟΠΗ ΑΣΤΕΡΟΕΙΔΟΥΣ", startBtnText: "ΕΝΑΡΞΗ", backText: "ΠΙΣΩ", nextBtnText: "ΕΠΟΜΕΝΗ ΑΠΟΣΤΟΛΗ", retryBtnText: "ΞΑΝΑΔΟΚΙΜΑΣΕ",
+        cinematicScene: `<div>Ένας αστεροειδής κατευθύνεται προς το διαστημόπλοιο! Πρέπει να εκτοξεύσεις ένα βλήμα για να τον εκτρέψεις χρησιμοποιώντας τη <span style="color:#ffd60a">διατήρηση της ορμής</span>.</div>`,
+        dialogueReady: "Εκτόξευσε το βλήμα για να εκτρέψεις τον αστεροειδή!", dialogueSuccess: "Τέλεια! Ο αστεροειδής εκτράπηκε!", dialogueFail: "Η απόκλιση δεν ήταν αρκετή!",
+        resultGold: "ΤΕΛΕΙΑ ΕΚΤΡΟΠΗ!", resultFail: "ΑΠΟΤΥΧΙΑ!", endSuccess: "Ο αστεροειδής απομακρύνθηκε με επιτυχία!", endFail: "Χρειάζεται μεγαλύτερη ορμή!",
+        bl1: "Μάζα Αστεροειδή", bl2: "Μάζα Βλήματος", bl3: "Ταχύτητα Αστεροειδή", bl4: "Στόχος Απόκλισης",
+        dataTitle: "📊 ΔΕΔΟΜΕΝΑ", controlTitle: "🎯 ΕΛΕΓΧΟΣ ΒΛΗΜΑΤΟΣ", physicsTitle: "📐 ΔΙΑΤΗΡΗΣΗ ΟΡΜΗΣ",
+        dl1: "Μάζα αστεροειδή (M):", dl2: "Μάζα βλήματος (m):", dl3: "Ταχύτητα αστ. (V₀):",
+        sl1: "Ταχύτητα βλήματος (v):", sl2: "Γωνία πρόσκρουσης:",
+        fn1: "Ορμή σώματος", fn2: "Διατήρηση ορμής", fn3: "Μεταβολή ταχύτητας (πλαστική)",
+        fireBtnText: "ΕΚΤΟΞΕΥΣΗ", resetBtnText: "ΕΠΑΝΑΦΟΡΑ", hintBtnText: "ΥΠΟΔΕΙΞΗ (-5)",
+        attemptsLabel: "ΠΡΟΣΠΑΘΕΙΕΣ", scoreLabel: "ΒΑΘΜΟΣ"
+      },
+      en: { 
+        introTitle: "ASTEROID DEFLECTION", startBtnText: "START", backText: "BACK", nextBtnText: "NEXT MISSION", retryBtnText: "TRY AGAIN",
+        cinematicScene: `<div>An asteroid is heading towards the spacecraft! You must launch a projectile to deflect it using <span style="color:#ffd60a">conservation of momentum</span>.</div>`,
+        dialogueReady: "Launch the projectile to deflect the asteroid!", dialogueSuccess: "Perfect! The asteroid was deflected!", dialogueFail: "The deflection was not enough!",
+        resultGold: "PERFECT DEFLECTION!", resultFail: "FAILED!", endSuccess: "The asteroid was successfully deflected!", endFail: "More momentum needed!",
+        bl1: "Asteroid Mass", bl2: "Projectile Mass", bl3: "Asteroid Velocity", bl4: "Deflection Target",
+        dataTitle: "📊 DATA", controlTitle: "🎯 PROJECTILE CONTROL", physicsTitle: "📐 MOMENTUM CONSERVATION",
+        dl1: "Asteroid mass (M):", dl2: "Projectile mass (m):", dl3: "Asteroid vel. (V₀):",
+        sl1: "Projectile velocity (v):", sl2: "Impact angle:",
+        fn1: "Body momentum", fn2: "Momentum conservation", fn3: "Velocity change (plastic)",
+        fireBtnText: "LAUNCH", resetBtnText: "RESET", hintBtnText: "HINT (-5)",
+        attemptsLabel: "ATTEMPTS", scoreLabel: "SCORE"
+      },
+      it: { 
+        introTitle: "DEFLESSIONE ASTEROIDE", startBtnText: "INIZIA", backText: "INDIETRO", nextBtnText: "PROSSIMA MISSIONE", retryBtnText: "RIPROVA",
+        cinematicScene: `<div>Un asteroide si sta dirigendo verso la navicella! Devi lanciare un proiettile per deviarlo usando la <span style="color:#ffd60a">conservazione della quantità di moto</span>.</div>`,
+        dialogueReady: "Lancia il proiettile per deviare l'asteroide!", dialogueSuccess: "Perfetto! L'asteroide è stato deviato!", dialogueFail: "La deviazione non era sufficiente!",
+        resultGold: "DEFLESSIONE PERFETTA!", resultFail: "FALLITO!", endSuccess: "L'asteroide è stato deviato con successo!", endFail: "Serve più quantità di moto!",
+        bl1: "Massa Asteroide", bl2: "Massa Proiettile", bl3: "Velocità Asteroide", bl4: "Obiettivo Deflessione",
+        dataTitle: "📊 DATI", controlTitle: "🎯 CONTROLLO PROIETTILE", physicsTitle: "📐 CONSERVAZIONE QUANTITÀ DI MOTO",
+        dl1: "Massa asteroide (M):", dl2: "Massa proiettile (m):", dl3: "Velocità ast. (V₀):",
+        sl1: "Velocità proiettile (v):", sl2: "Angolo impatto:",
+        fn1: "Quantità di moto", fn2: "Conservazione quantità di moto", fn3: "Variazione velocità (plastica)",
+        fireBtnText: "LANCIA", resetBtnText: "RICOMINCIA", hintBtnText: "SUGGERIMENTO (-5)",
+        attemptsLabel: "TENTATIVI", scoreLabel: "PUNTEGGIO"
+      },
+      es: {
+        introTitle: "DESVIACIÓN DE ASTEROIDE", startBtnText: "INICIAR", backText: "ATRÁS", nextBtnText: "SIGUIENTE MISIÓN", retryBtnText: "REINTENTAR",
+        cinematicScene: `<div>¡Un asteroide se dirige hacia la nave! Debes lanzar un proyectil para desviarlo usando la <span style="color:#ffd60a">conservación del momento</span>.</div>`,
+        dialogueReady: "¡Lanza el proyectil para desviar el asteroide!", dialogueSuccess: "¡Perfecto! ¡El asteroide fue desviado!", dialogueFail: "¡La desviación no fue suficiente!",
+        resultGold: "¡DESVIACIÓN PERFECTA!", resultFail: "¡FALLIDO!", endSuccess: "¡El asteroide fue desviado con éxito!", endFail: "¡Se necesita más momento!",
+        bl1: "Masa Asteroide", bl2: "Masa Proyectil", bl3: "Velocidad Asteroide", bl4: "Objetivo Desviación",
+        dataTitle: "📊 DATOS", controlTitle: "🎯 CONTROL PROYECTIL", physicsTitle: "📐 CONSERVACIÓN DE MOMENTO",
+        dl1: "Masa asteroide (M):", dl2: "Masa proyectil (m):", dl3: "Vel. asteroide (V₀):",
+        sl1: "Velocidad proyectil (v):", sl2: "Ángulo impacto:",
+        fn1: "Momento del cuerpo", fn2: "Conservación de momento", fn3: "Cambio de velocidad (plástica)",
+        fireBtnText: "LANZAR", resetBtnText: "REINICIAR", hintBtnText: "PISTA (-5)",
+        attemptsLabel: "INTENTOS", scoreLabel: "PUNTOS"
+      },
+      de: {
+        introTitle: "ASTEROIDENABLENKUNG", startBtnText: "START", backText: "ZURÜCK", nextBtnText: "NÄCHSTE MISSION", retryBtnText: "NOCHMAL",
+        cinematicScene: `<div>Ein Asteroid rast auf das Raumschiff zu! Du musst ein Projektil abfeuern um ihn mit <span style="color:#ffd60a">Impulserhaltung</span> abzulenken.</div>`,
+        dialogueReady: "Feuere das Projektil um den Asteroiden abzulenken!", dialogueSuccess: "Perfekt! Der Asteroid wurde abgelenkt!", dialogueFail: "Die Ablenkung war nicht ausreichend!",
+        resultGold: "PERFEKTE ABLENKUNG!", resultFail: "FEHLGESCHLAGEN!", endSuccess: "Der Asteroid wurde erfolgreich abgelenkt!", endFail: "Mehr Impuls benötigt!",
+        bl1: "Asteroidenmasse", bl2: "Projektilmasse", bl3: "Asteroidengeschwindigkeit", bl4: "Ablenkungsziel",
+        dataTitle: "📊 DATEN", controlTitle: "🎯 PROJEKTILSTEUERUNG", physicsTitle: "📐 IMPULSERHALTUNG",
+        dl1: "Asteroidenmasse (M):", dl2: "Projektilmasse (m):", dl3: "Asteroidengeschw. (V₀):",
+        sl1: "Projektilgeschwindigkeit (v):", sl2: "Aufprallwinkel:",
+        fn1: "Körperimpuls", fn2: "Impulserhaltung", fn3: "Geschwindigkeitsänderung (plastisch)",
+        fireBtnText: "ABFEUERN", resetBtnText: "NEUSTART", hintBtnText: "HINWEIS (-5)",
+        attemptsLabel: "VERSUCHE", scoreLabel: "PUNKTE"
+      },
+      fr: {
+        introTitle: "DÉVIATION D'ASTÉROÏDE", startBtnText: "DÉMARRER", backText: "RETOUR", nextBtnText: "MISSION SUIVANTE", retryBtnText: "RÉESSAYER",
+        cinematicScene: `<div>Un astéroïde se dirige vers le vaisseau! Tu dois lancer un projectile pour le dévier en utilisant la <span style="color:#ffd60a">conservation de la quantité de mouvement</span>.</div>`,
+        dialogueReady: "Lance le projectile pour dévier l'astéroïde!", dialogueSuccess: "Parfait! L'astéroïde a été dévié!", dialogueFail: "La déviation n'était pas suffisante!",
+        resultGold: "DÉVIATION PARFAITE!", resultFail: "ÉCHEC!", endSuccess: "L'astéroïde a été dévié avec succès!", endFail: "Plus de quantité de mouvement nécessaire!",
+        bl1: "Masse Astéroïde", bl2: "Masse Projectile", bl3: "Vitesse Astéroïde", bl4: "Objectif Déviation",
+        dataTitle: "📊 DONNÉES", controlTitle: "🎯 CONTRÔLE PROJECTILE", physicsTitle: "📐 CONSERVATION DE LA QUANTITÉ DE MOUVEMENT",
+        dl1: "Masse astéroïde (M):", dl2: "Masse projectile (m):", dl3: "Vit. astéroïde (V₀):",
+        sl1: "Vitesse projectile (v):", sl2: "Angle d'impact:",
+        fn1: "Quantité de mouvement", fn2: "Conservation de la quantité de mouvement", fn3: "Changement de vitesse (plastique)",
+        fireBtnText: "LANCER", resetBtnText: "RECOMMENCER", hintBtnText: "INDICE (-5)",
+        attemptsLabel: "ESSAIS", scoreLabel: "SCORE"
+      },
+      bg: {
+        introTitle: "ОТКЛОНЯВАНЕ НА АСТЕРОИД", startBtnText: "СТАРТ", backText: "НАЗАД", nextBtnText: "СЛЕДВАЩА МИСИЯ", retryBtnText: "ОПИТАЙ ОТНОВО",
+        cinematicScene: `<div>Астероид се насочва към кораба! Трябва да изстреляш снаряд за да го отклониш с <span style="color:#ffd60a">запазване на импулса</span>.</div>`,
+        dialogueReady: "Изстреляй снаряда за да отклониш астероида!", dialogueSuccess: "Перфектно! Астероидът беше отклонен!", dialogueFail: "Отклонението не беше достатъчно!",
+        resultGold: "ПЕРФЕКТНО ОТКЛОНЕНИЕ!", resultFail: "НЕУСПЕХ!", endSuccess: "Астероидът беше успешно отклонен!", endFail: "Нужен е повече импулс!",
+        bl1: "Маса Астероид", bl2: "Маса Снаряд", bl3: "Скорост Астероид", bl4: "Цел Отклонение",
+        dataTitle: "📊 ДАННИ", controlTitle: "🎯 УПРАВЛЕНИЕ СНАРЯД", physicsTitle: "📐 ЗАПАЗВАНЕ НА ИМПУЛСА",
+        dl1: "Маса астероид (M):", dl2: "Маса снаряд (m):", dl3: "Скор. астероид (V₀):",
+        sl1: "Скорост снаряд (v):", sl2: "Ъгъл на удар:",
+        fn1: "Импулс на тяло", fn2: "Запазване на импулса", fn3: "Промяна на скоростта (пластична)",
+        fireBtnText: "ИЗСТРЕЛЯЙ", resetBtnText: "РЕСТАРТ", hintBtnText: "ПОДСКАЗКА (-5)",
+        attemptsLabel: "ОПИТИ", scoreLabel: "ТОЧКИ"
+      },
+      pt: {
+        introTitle: "DESVIO DE ASTEROIDE", startBtnText: "INICIAR", backText: "VOLTAR", nextBtnText: "PRÓXIMA MISSÃO", retryBtnText: "TENTAR NOVAMENTE",
+        cinematicScene: `<div>Um asteroide está se dirigindo para a nave! Você deve lançar um projétil para desviá-lo usando a <span style="color:#ffd60a">conservação do momento</span>.</div>`,
+        dialogueReady: "Lance o projétil para desviar o asteroide!", dialogueSuccess: "Perfeito! O asteroide foi desviado!", dialogueFail: "O desvio não foi suficiente!",
+        resultGold: "DESVIO PERFEITO!", resultFail: "FALHOU!", endSuccess: "O asteroide foi desviado com sucesso!", endFail: "Mais momento necessário!",
+        bl1: "Massa Asteroide", bl2: "Massa Projétil", bl3: "Velocidade Asteroide", bl4: "Objetivo Desvio",
+        dataTitle: "📊 DADOS", controlTitle: "🎯 CONTROLE PROJÉTIL", physicsTitle: "📐 CONSERVAÇÃO DO MOMENTO",
+        dl1: "Massa asteroide (M):", dl2: "Massa projétil (m):", dl3: "Vel. asteroide (V₀):",
+        sl1: "Velocidade projétil (v):", sl2: "Ângulo impacto:",
+        fn1: "Momento do corpo", fn2: "Conservação do momento", fn3: "Mudança de velocidade (plástica)",
+        fireBtnText: "LANÇAR", resetBtnText: "REINICIAR", hintBtnText: "DICA (-5)",
+        attemptsLabel: "TENTATIVAS", scoreLabel: "PONTOS"
+      },
+      fi: {
+        introTitle: "ASTEROIDIN KÄÄNTÖ", startBtnText: "ALOITA", backText: "TAKAISIN", nextBtnText: "SEURAAVA TEHTÄVÄ", retryBtnText: "YRITÄ UUDELLEEN",
+        cinematicScene: `<div>Asteroidi lähestyy alusta! Sinun täytyy laukaista ammuksia kääntääksesi sen <span style="color:#ffd60a">liikemäärän säilymisellä</span>.</div>`,
+        dialogueReady: "Laukaise ammus kääntääksesi asteroidin!", dialogueSuccess: "Täydellistä! Asteroidi käännettiin!", dialogueFail: "Kääntö ei ollut riittävä!",
+        resultGold: "TÄYDELLINEN KÄÄNTÖ!", resultFail: "EPÄONNISTUI!", endSuccess: "Asteroidi käännettiin onnistuneesti!", endFail: "Lisää liikemäärää tarvitaan!",
+        bl1: "Asteroidin Massa", bl2: "Ammuksen Massa", bl3: "Asteroidin Nopeus", bl4: "Kääntötavoite",
+        dataTitle: "📊 TIEDOT", controlTitle: "🎯 AMMUSOHJAUS", physicsTitle: "📐 LIIKEMÄÄRÄN SÄILYMINEN",
+        dl1: "Asteroidin massa (M):", dl2: "Ammuksen massa (m):", dl3: "Asteroidin nop. (V₀):",
+        sl1: "Ammuksen nopeus (v):", sl2: "Osuman kulma:",
+        fn1: "Kappaleen liikemäärä", fn2: "Liikemäärän säilyminen", fn3: "Nopeuden muutos (plastinen)",
+        fireBtnText: "LAUKAISE", resetBtnText: "ALUSTA", hintBtnText: "VIHJE (-5)",
+        attemptsLabel: "YRITYKSET", scoreLabel: "PISTEET"
+      }
+    };
+
+    let state = { language: 'en', phase: 'intro', attempts: 0, score: 100, projV: 100, angle: 90,
+      asteroidX: 600, asteroidVx: -50, asteroidVy: 0, projectileX: 100, projectileY: 0, projectileFired: false,
+      M: 1000, m: 100, V0: 50, TARGET_DV: 10 };
+
+    const $ = id => document.getElementById(id);
+    const canvas = $('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    function t(key) { return I18N[state.language][key] || key; }
+
+    function setLanguage(lang) {
+      state.language = lang;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+      document.querySelectorAll('.lang-option').forEach(o => o.classList.toggle('active', o.dataset.lang === lang));
+      $('introTitle').textContent = t('introTitle');
+      $('cinematicScene').innerHTML = t('cinematicScene');
+      $('startBtnText').textContent = t('startBtnText');
+      $('backText').textContent = t('backText');
+      $('nextBtnText').textContent = t('nextBtnText');
+      $('retryBtnText').textContent = t('retryBtnText');
+      $('dialogueText').textContent = t('dialogueReady');
+      // New translations
+      if ($('bl1')) $('bl1').textContent = t('bl1');
+      if ($('bl2')) $('bl2').textContent = t('bl2');
+      if ($('bl3')) $('bl3').textContent = t('bl3');
+      if ($('bl4')) $('bl4').textContent = t('bl4');
+      if ($('dataTitle')) $('dataTitle').textContent = t('dataTitle');
+      if ($('controlTitle')) $('controlTitle').textContent = t('controlTitle');
+      if ($('physicsTitle')) $('physicsTitle').textContent = t('physicsTitle');
+      if ($('dl1')) $('dl1').textContent = t('dl1');
+      if ($('dl2')) $('dl2').textContent = t('dl2');
+      if ($('dl3')) $('dl3').textContent = t('dl3');
+      if ($('sl1')) $('sl1').textContent = t('sl1');
+      if ($('sl2')) $('sl2').textContent = t('sl2');
+      if ($('fn1')) $('fn1').textContent = t('fn1');
+      if ($('fn2')) $('fn2').textContent = t('fn2');
+      if ($('fn3')) $('fn3').textContent = t('fn3');
+      if ($('fireBtnText')) $('fireBtnText').textContent = t('fireBtnText');
+      if ($('resetBtnText')) $('resetBtnText').textContent = t('resetBtnText');
+      if ($('hintBtnText')) $('hintBtnText').textContent = t('hintBtnText');
+      if ($('attemptsLabel')) $('attemptsLabel').textContent = t('attemptsLabel');
+      if ($('scoreLabel')) $('scoreLabel').textContent = t('scoreLabel');
+      localStorage.setItem('atlas_language', lang);
+    }
+
+    function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
+
+    function render() {
+      const W = canvas.width, H = canvas.height;
+      ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < 50; i++) { ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc((i*137)%W, (i*73)%H, Math.random(), 0, Math.PI*2); ctx.fill(); }
+      
+      // Spacecraft
+      ctx.fillStyle = '#4ecdc4';
+      ctx.beginPath(); ctx.moveTo(80, H/2); ctx.lineTo(120, H/2-20); ctx.lineTo(120, H/2+20); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '10px monospace'; ctx.fillText('ATLAS-7', 70, H/2+40);
+      
+      // Asteroid
+      const astX = 100 + state.asteroidX * (W-200) / 600;
+      ctx.fillStyle = '#8b4513';
+      ctx.beginPath(); ctx.arc(astX, H/2 + state.asteroidVy*2, 40, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#6b3010';
+      ctx.beginPath(); ctx.arc(astX-10, H/2-10+state.asteroidVy*2, 10, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '12px monospace';
+      ctx.fillText(`☄️ V=${Math.abs(state.asteroidVx).toFixed(0)} m/s`, astX-30, H/2-50+state.asteroidVy*2);
+      
+      // Projectile if fired
+      if (state.projectileFired) {
+        ctx.fillStyle = '#ff6b35';
+        ctx.beginPath(); ctx.arc(state.projectileX, H/2 + state.projectileY, 8, 0, Math.PI*2); ctx.fill();
+      }
+      
+      // Info
+      ctx.fillStyle = '#ffd60a'; ctx.font = '16px monospace';
+      ctx.fillText(`Ορμή αστ.: p = M·V = ${state.M}×${Math.abs(state.asteroidVx).toFixed(0)} = ${(state.M*Math.abs(state.asteroidVx)).toFixed(0)} kg·m/s`, 20, 30);
+      ctx.fillText(`Ορμή βλήμ.: p = m·v = ${state.m}×${state.projV} = ${state.m*state.projV} kg·m/s`, 20, 55);
+    }
+
+    function fire() {
+      if (state.phase !== 'ready' || state.projectileFired) return;
+      state.attempts++;
+      $('attemptsDisplay').textContent = state.attempts;
+      state.projectileFired = true;
+      state.projectileX = 130;
+      
+      const angleRad = state.angle * Math.PI / 180;
+      const projVx = state.projV * Math.cos(angleRad);
+      const projVy = -state.projV * Math.sin(angleRad);
+      
+      // Animate projectile
+      const animate = () => {
+        state.projectileX += projVx * 0.02;
+        state.projectileY += projVy * 0.02;
+        render();
+        
+        const astScreenX = 100 + state.asteroidX * (canvas.width-200) / 600;
+        if (Math.abs(state.projectileX - astScreenX) < 50) {
+          // Collision! Apply conservation of momentum (plastic collision)
+          const totalMass = state.M + state.m;
+          const newVx = (state.M * state.asteroidVx + state.m * projVx) / totalMass;
+          const newVy = (state.m * projVy) / totalMass;
+          const deflection = Math.sqrt(newVy * newVy);
+          
+          state.asteroidVx = newVx;
+          state.asteroidVy = newVy * 5;
+          
+          if (deflection > state.TARGET_DV) {
+            state.phase = 'success';
+            $('dialogueText').textContent = t('dialogueSuccess');
+            setTimeout(() => showEnd(true, deflection), 1500);
+          } else {
+            state.phase = 'failed';
+            $('dialogueText').textContent = t('dialogueFail');
+            setTimeout(() => showEnd(false, deflection), 1500);
+          }
+          return;
+        }
+        if (state.projectileX < canvas.width) requestAnimationFrame(animate);
+      };
+      animate();
+    }
+
+    function showEnd(success, deflection) {
+      state.score = success ? Math.max(0, 100 - (state.attempts-1)*15) : 0;
+      $('resultMedal').textContent = success ? '🥇' : '💔';
+      $('resultTitle').textContent = success ? t('resultGold') : t('resultFail');
+      $('resultTitle').className = `result-title ${success ? 'gold' : 'fail'}`;
+      $('endCinematic').innerHTML = `<p>${success ? t('endSuccess') : t('endFail')}</p><p>Απόκλιση: ${deflection.toFixed(1)} m/s</p>`;
+      $('nextBtn').style.display = success ? 'block' : 'none';
+      $('endModal').classList.remove('hidden');
+      localStorage.setItem('atlas_game7_completed', success);
+    }
+
+    function reset() {
+      state.asteroidX = 600; state.asteroidVx = -50; state.asteroidVy = 0;
+      state.projectileFired = false; state.projectileX = 100; state.projectileY = 0;
+      state.phase = 'ready';
+      $('dialogueText').textContent = t('dialogueReady');
+    }
+
+    function hint() { 
+      const hints = {
+        el: 'Η κάθετη συνιστώσα της ορμής είναι Δp_y = m·v·sinθ. Σκέψου: πώς επηρεάζει η γωνία θ το sinθ;',
+        en: 'The perpendicular momentum component is Δp_y = m·v·sinθ. Think: how does angle θ affect sinθ?',
+        it: 'La componente perpendicolare della quantità di moto è Δp_y = m·v·sinθ. Pensa: come influisce l\'angolo θ su sinθ?'
+      };
+      $('dialogueText').textContent = hints[state.language] || hints.el; 
+      state.score = Math.max(0, state.score - 5); 
+      $('scoreDisplay').textContent = state.score; 
+    }
+
+    function goBack() { window.location.href = 'index.html'; }
+
+    function init() {
+      const savedLang = localStorage.getItem('atlas_language');
+      if (savedLang) setLanguage(savedLang);
+      resizeCanvas();
+      window.addEventListener('resize', () => { resizeCanvas(); render(); });
+      $('startBtn').addEventListener('click', () => { state.phase = 'ready'; $('introModal').classList.add('hidden'); });
+      $('nextBtn').addEventListener('click', () => { window.location.href = 'gravity_assist.html'; });
+      $('retryBtn').addEventListener('click', () => { $('endModal').classList.add('hidden'); state.attempts = 0; state.score = 100; $('attemptsDisplay').textContent = '0'; $('scoreDisplay').textContent = '100'; reset(); });
+      $('projVSlider').addEventListener('input', e => { state.projV = parseInt(e.target.value); $('projVDisplay').textContent = state.projV + ' m/s'; });
+      $('angleSlider').addEventListener('input', e => { state.angle = parseInt(e.target.value); $('angleDisplay').textContent = state.angle + '°'; });
+      document.addEventListener('keydown', e => { if (e.code === 'Space') fire(); if (e.code === 'KeyR') reset(); });
+      setLanguage(state.language);
+      setInterval(render, 50);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
