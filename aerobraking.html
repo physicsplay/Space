@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌍 AEROBRAKING — Mission ATLAS Act 9</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}:root{--void:#030308;--atmo:#4361ee;--heat:#e63946;--gold:#ffd60a;--green:#06d6a0}
+    html,body{height:100%;overflow:hidden}body{font-family:'Segoe UI',sans-serif;background:var(--void);color:#f0f4ff}
+    .game-container{display:grid;grid-template-columns:1fr 350px;grid-template-rows:auto 1fr auto;height:100vh}
+    @media(max-width:900px){.game-container{grid-template-columns:1fr;grid-template-rows:auto 1fr auto auto}}
+    .header{grid-column:1/-1;background:rgba(10,10,26,.95);padding:.5rem 1rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(67,97,238,.3)}
+    .back-btn{background:rgba(67,97,238,.2);border:1px solid rgba(67,97,238,.4);border-radius:8px;padding:.5rem 1rem;color:var(--atmo);cursor:pointer}
+    .game-title{font-family:'Courier New',monospace}.game-title .act{color:var(--gold);font-size:.8rem}
+    .stat-value{font-family:'Courier New',monospace;font-size:1.3rem;color:var(--gold)}.stat-label{font-size:.7rem;color:#888}
+    .lang-btn{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:6px;padding:.25rem .5rem;cursor:pointer}
+    .lang-btn.active{background:rgba(255,214,10,.2);border-color:var(--gold)}
+    #gameCanvas{display:block;width:100%;height:100%;background:#0a0a1a}
+    .control-panel{background:rgba(20,15,30,.98);padding:1rem;overflow-y:auto;border-left:1px solid rgba(67,97,238,.2);display:flex;flex-direction:column;gap:1rem}
+    .panel-section{background:rgba(0,0,0,.3);border-radius:12px;padding:1rem;border:1px solid rgba(67,97,238,.2)}
+    .section-title{font-family:'Courier New',monospace;color:var(--atmo);margin-bottom:.5rem}
+    .data-row{display:flex;justify-content:space-between;padding:.25rem 0;font-size:.85rem}.data-label{color:#888}.data-value{font-family:'Courier New',monospace}
+    .slider{width:100%;height:8px;-webkit-appearance:none;background:rgba(255,255,255,.1);border-radius:4px}
+    .slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--atmo);cursor:pointer}
+    .formula-box{background:rgba(67,97,238,.1);border:1px solid rgba(67,97,238,.3);border-radius:8px;padding:.5rem;margin-bottom:.5rem;text-align:center}
+    .formula{font-family:'Courier New',monospace;color:var(--atmo)}.formula-note{font-size:.75rem;color:#888}
+    .btn{padding:1rem;border:none;border-radius:10px;font-family:'Courier New',monospace;cursor:pointer;width:100%;margin-bottom:.5rem}
+    .btn-primary{background:linear-gradient(135deg,#4361ee,#3a56d4);color:#fff}
+    .btn-secondary{background:rgba(255,255,255,.1);color:#fff}.btn-hint{background:rgba(255,214,10,.2);color:var(--gold)}
+    .dialogue-box{background:rgba(0,0,0,.5);border-left:3px solid var(--atmo);padding:.5rem;font-size:.85rem}
+    .footer{grid-column:1/-1;background:rgba(10,10,26,.95);padding:.5rem 1rem;font-size:.8rem;color:#888}
+    .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);z-index:1000;display:flex;align-items:center;justify-content:center;padding:2rem}
+    .modal-overlay.hidden{opacity:0;pointer-events:none}
+    .modal{max-width:700px;width:100%;max-height:90vh;overflow-y:auto;background:linear-gradient(135deg,rgba(20,20,40,.98),rgba(10,10,30,.98));border:2px solid var(--gold);border-radius:20px;padding:2rem}
+    .modal-title{font-family:'Courier New',monospace;font-size:1.8rem;text-align:center;color:var(--gold);margin-bottom:1rem}
+    .lang-selector-intro{display:flex;justify-content:center;gap:1rem;margin-bottom:2rem}
+    .lang-option{display:flex;flex-direction:column;align-items:center;padding:1rem;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.2);border-radius:12px;cursor:pointer;min-width:100px}
+    .lang-option.active{background:rgba(255,214,10,.2);border-color:var(--gold)}
+    .lang-flag{font-size:2.5rem}.lang-name{font-size:.85rem;color:#888}
+    .cinematic-scene{background:rgba(0,0,0,.5);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;font-family:'Courier New',monospace;line-height:1.8}
+    .briefing-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem}
+    .briefing-item{background:rgba(0,0,0,.3);border-radius:10px;padding:1rem;text-align:center}
+    .briefing-icon{font-size:2rem}.briefing-label{font-size:.8rem;color:#888}.briefing-value{font-family:'Courier New',monospace;color:var(--atmo)}
+    .modal-btn{display:block;width:100%;padding:1rem;background:linear-gradient(135deg,#ffd700,#ffaa00);border:none;border-radius:12px;font-family:'Courier New',monospace;font-size:1.1rem;color:#000;cursor:pointer;margin-bottom:.5rem}
+    .modal-btn.secondary{background:rgba(255,255,255,.1);color:#fff}
+    .result-medal{font-size:5rem;text-align:center}.result-title{font-family:'Courier New',monospace;font-size:1.5rem;text-align:center;color:var(--gold)}
+    .hidden{display:none!important}
+    .temp-bar{height:20px;background:rgba(255,255,255,.1);border-radius:10px;overflow:hidden;margin:.5rem 0}
+    .temp-fill{height:100%;background:linear-gradient(90deg,#06d6a0,#ffd60a,#e63946);transition:width .3s}
+  </style>
+</head>
+<body>
+  <div class="modal-overlay" id="introModal">
+    <div class="modal">
+      <h1 class="modal-title" id="modalTitle">🌍 ΑΕΡΟΠΕΔΗΣΗ</h1>
+      <div class="lang-selector-intro">
+        <div class="lang-option" data-lang="el" onclick="setLanguage('el')"><span class="lang-flag">🇬🇷</span><span class="lang-name">Ελληνικά</span></div>
+        <div class="lang-option active" data-lang="en" onclick="setLanguage('en')"><span class="lang-flag">🇬🇧</span><span class="lang-name">English</span></div>
+        <div class="lang-option" data-lang="it" onclick="setLanguage('it')"><span class="lang-flag">🇮🇹</span><span class="lang-name">Italiano</span></div>
+        <div class="lang-option" data-lang="es" onclick="setLanguage('es')"><span class="lang-flag">🇪🇸</span><span class="lang-name">Español</span></div>
+        <div class="lang-option" data-lang="bg" onclick="setLanguage('bg')"><span class="lang-flag">🇧🇬</span><span class="lang-name">Български</span></div>
+        <div class="lang-option" data-lang="pt" onclick="setLanguage('pt')"><span class="lang-flag">🇵🇹</span><span class="lang-name">Português</span></div>
+        <div class="lang-option" data-lang="de" onclick="setLanguage('de')"><span class="lang-flag">🇩🇪</span><span class="lang-name">Deutsch</span></div>
+        <div class="lang-option" data-lang="fr" onclick="setLanguage('fr')"><span class="lang-flag">🇫🇷</span><span class="lang-name">Français</span></div>
+        <div class="lang-option" data-lang="fi" onclick="setLanguage('fi')"><span class="lang-flag">🇫🇮</span><span class="lang-name">Suomi</span></div>
+      </div>
+      <div class="cinematic-scene" id="introScene">Επιστροφή στη Γη! Η θερμική ασπίδα είναι κατεστραμμένη. Πρέπει να υπολογίσεις την τέλεια γωνία εισόδου — πολύ απότομα = υπερθέρμανση, πολύ ρηχά = αναπήδηση!</div>
+      <div class="briefing-grid">
+        <div class="briefing-item"><div class="briefing-icon">🚀</div><div class="briefing-label" id="bl1">Ταχύτητα Εισόδου</div><div class="briefing-value">v = 11 km/s</div></div>
+        <div class="briefing-item"><div class="briefing-icon">🌡️</div><div class="briefing-label" id="bl2">Μέγ. Θερμοκρασία</div><div class="briefing-value">T_max = 2000°C</div></div>
+        <div class="briefing-item"><div class="briefing-icon">📐</div><div class="briefing-label" id="bl3">Γωνία Εισόδου</div><div class="briefing-value">θ = 3° - 15°</div></div>
+        <div class="briefing-item"><div class="briefing-icon">🎯</div><div class="briefing-label" id="bl4">Κατάσταση Ασπίδας</div><div class="briefing-value">⚠️ ΚΑΤΕΣΤΡΑΜΜΕΝΗ</div></div>
+      </div>
+      <button class="modal-btn" id="startBtn" onclick="startGame()">🌍 ΕΝΑΡΞΗ</button>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="endModal">
+    <div class="modal">
+      <div class="result-medal" id="resultMedal">🥇</div>
+      <h2 class="result-title" id="resultTitle">ΕΠΙΤΥΧΙΑ!</h2>
+      <div class="cinematic-scene" id="endCinematic"></div>
+      <button class="modal-btn" id="nextBtn" onclick="victory()">🏆 ΟΛΟΚΛΗΡΩΣΗ ΑΠΟΣΤΟΛΗΣ</button>
+      <button class="modal-btn secondary" id="retryBtn" onclick="retry()">ΞΑΝΑΔΟΚΙΜΑΣΕ</button>
+    </div>
+  </div>
+  <div class="game-container">
+    <header class="header">
+      <div style="display:flex;align-items:center;gap:1rem">
+        <button class="back-btn" id="backBtn" onclick="goBack()">← ΠΙΣΩ</button>
+        <div class="game-title"><div class="act">ACT 9 — FINAL</div>AEROBRAKING</div>
+      </div>
+      <div style="display:flex;gap:2rem">
+        <div class="stat-box"><div class="stat-value" id="attemptsDisplay">0</div><div class="stat-label" id="attemptsLabel">ΠΡΟΣΠΑΘΕΙΕΣ</div></div>
+        <div class="stat-box"><div class="stat-value" id="scoreDisplay">100</div><div class="stat-label" id="scoreLabel">ΒΑΘΜΟΣ</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem">
+        <button class="lang-btn" data-lang="el" onclick="setLanguage('el')">🇬🇷</button>
+        <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">🇬🇧</button>
+        <button class="lang-btn" data-lang="it" onclick="setLanguage('it')">🇮🇹</button>
+        <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">🇪🇸</button>
+        <button class="lang-btn" data-lang="bg" onclick="setLanguage('bg')">🇧🇬</button>
+        <button class="lang-btn" data-lang="pt" onclick="setLanguage('pt')">🇵🇹</button>
+        <button class="lang-btn" data-lang="de" onclick="setLanguage('de')">🇩🇪</button>
+        <button class="lang-btn" data-lang="fr" onclick="setLanguage('fr')">🇫🇷</button>
+        <button class="lang-btn" data-lang="fi" onclick="setLanguage('fi')">🇫🇮</button>
+      </div>
+    </header>
+    <div><canvas id="gameCanvas"></canvas></div>
+    <div class="control-panel">
+      <div class="panel-section">
+        <div class="section-title" id="dataTitle">📊 ΔΕΔΟΜΕΝΑ</div>
+        <div class="data-row"><span class="data-label" id="dl1">Ταχύτητα:</span><span class="data-value">11 km/s</span></div>
+        <div class="data-row"><span class="data-label" id="dl2">Μέγ. T ασπίδας:</span><span class="data-value">2000°C</span></div>
+        <div class="data-row"><span class="data-label" id="dl3">Τρέχουσα T:</span><span class="data-value" id="currentT">-- °C</span></div>
+      </div>
+      <div class="panel-section">
+        <div class="section-title" id="angleTitle">📐 ΓΩΝΙΑ ΕΙΣΟΔΟΥ</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:.5rem"><span id="angleLabel">Γωνία θ:</span><span id="angleDisplay">4°</span></div>
+        <input type="range" class="slider" id="angleSlider" min="3" max="15" value="4" step="0.5">
+        <div class="temp-bar"><div class="temp-fill" id="tempFill" style="width:20%"></div></div>
+      </div>
+      <div class="panel-section">
+        <div class="section-title" id="physicsTitle">📐 ΑΝΤΙΣΤΑΣΗ ΑΕΡΑ</div>
+        <div class="formula-box"><div class="formula">F = ½ρCdAv²</div><div class="formula-note" id="fn1">Δύναμη αντίστασης</div></div>
+        <div class="formula-box"><div class="formula">T ∝ v³</div><div class="formula-note" id="fn2">Θερμοκρασία ~ ταχύτητα³</div></div>
+        <div class="formula-box"><div class="formula">ΔE = ½mv₁² - ½mv₂²</div><div class="formula-note" id="fn3">Απώλεια ενέργειας → θερμότητα</div></div>
+      </div>
+      <div class="panel-section">
+        <button class="btn btn-primary" id="executeBtn" onclick="execute()">🌍 ΕΙΣΟΔΟΣ ΑΤΜΟΣΦΑΙΡΑΣ</button>
+        <button class="btn btn-secondary" id="resetBtn" onclick="reset()">↺ ΕΠΑΝΑΦΟΡΑ</button>
+        <button class="btn btn-hint" id="hintBtn" onclick="hint()">💡 ΥΠΟΔΕΙΞΗ</button>
+      </div>
+      <div class="panel-section"><div class="dialogue-box" id="dialogueText">Η γωνία εισόδου καθορίζει πόση ενέργεια μετατρέπεται σε θερμότητα!</div></div>
+    </div>
+    <footer class="footer" id="footerText">SPACE: Είσοδος | R: Επαναφορά | Γη — Ατμοσφαιρική Είσοδος</footer>
+  </div>
+  <script>
+    const I18N = {
+      el: {
+        modalTitle: "🌍 ΑΕΡΟΠΕΔΗΣΗ", introScene: "Επιστροφή στη Γη! Η θερμική ασπίδα είναι κατεστραμμένη. Πρέπει να υπολογίσεις την τέλεια γωνία εισόδου — πολύ απότομα = υπερθέρμανση, πολύ ρηχά = αναπήδηση!",
+        bl1: "Ταχύτητα Εισόδου", bl2: "Μέγ. Θερμοκρασία", bl3: "Γωνία Εισόδου", bl4: "Ιδανική Γωνία",
+        startBtn: "🌍 ΕΝΑΡΞΗ", backBtn: "← ΠΙΣΩ", attemptsLabel: "ΠΡΟΣΠΑΘΕΙΕΣ", scoreLabel: "ΒΑΘΜΟΣ",
+        dataTitle: "📊 ΔΕΔΟΜΕΝΑ", dl1: "Ταχύτητα:", dl2: "Μέγ. T ασπίδας:", dl3: "Τρέχουσα T:",
+        angleTitle: "📐 ΓΩΝΙΑ ΕΙΣΟΔΟΥ", angleLabel: "Γωνία θ:", physicsTitle: "📐 ΑΝΤΙΣΤΑΣΗ ΑΕΡΑ",
+        fn1: "Δύναμη αντίστασης", fn2: "Θερμοκρασία ~ ταχύτητα³", fn3: "Απώλεια ενέργειας → θερμότητα",
+        executeBtn: "🌍 ΕΙΣΟΔΟΣ ΑΤΜΟΣΦΑΙΡΑΣ", resetBtn: "↺ ΕΠΑΝΑΦΟΡΑ", hintBtn: "💡 ΥΠΟΔΕΙΞΗ",
+        dialogueReady: "Η γωνία εισόδου καθορίζει πόση ενέργεια μετατρέπεται σε θερμότητα!",
+        dialogueHint: "Σκέψου: Μεγάλη γωνία = περισσότερη αντίσταση = περισσότερη θερμότητα. Μικρή γωνία = λιγότερη πέδηση. Βρες την ισορροπία!",
+        footerText: "SPACE: Είσοδος | R: Επαναφορά | Γη — Ατμοσφαιρική Είσοδος",
+        resultSuccess: "ΕΠΙΤΥΧΗΣ ΠΡΟΣΓΕΙΩΣΗ!", resultFail: "ΑΠΟΤΥΧΙΑ", 
+        endSuccess: "Το πλήρωμα επέστρεψε με ασφάλεια στη Γη!", endOverheat: "Υπερθέρμανση! Η ασπίδα κατέρρευσε.", endBounce: "Πολύ ρηχή γωνία - αναπήδηση στο διάστημα!",
+        nextBtn: "🏆 ΟΛΟΚΛΗΡΩΣΗ ΑΠΟΣΤΟΛΗΣ", retryBtn: "ΞΑΝΑΔΟΚΙΜΑΣΕ", tempLabel: "Θερμοκρασία"
+      },
+      en: {
+        modalTitle: "🌍 AEROBRAKING", introScene: "Return to Earth! The heat shield is damaged. You must calculate the perfect entry angle — too steep = overheating, too shallow = bounce off!",
+        bl1: "Entry Velocity", bl2: "Max Temperature", bl3: "Entry Angle", bl4: "Shield Status",
+        startBtn: "🌍 START", backBtn: "← BACK", attemptsLabel: "ATTEMPTS", scoreLabel: "SCORE",
+        dataTitle: "📊 DATA", dl1: "Velocity:", dl2: "Max Shield T:", dl3: "Current T:",
+        angleTitle: "📐 ENTRY ANGLE", angleLabel: "Angle θ:", physicsTitle: "📐 AIR RESISTANCE",
+        fn1: "Drag force", fn2: "Temperature ~ velocity³", fn3: "Energy loss → heat",
+        executeBtn: "🌍 ENTER ATMOSPHERE", resetBtn: "↺ RESET", hintBtn: "💡 HINT",
+        dialogueReady: "The entry angle determines how much energy converts to heat!",
+        dialogueHint: "Think: Steep angle = more drag = more heat. Shallow angle = less braking. Find the balance!",
+        footerText: "SPACE: Enter | R: Reset | Earth — Atmospheric Entry",
+        resultSuccess: "SUCCESSFUL LANDING!", resultFail: "FAILURE",
+        endSuccess: "The crew returned safely to Earth!", endOverheat: "Overheating! The shield collapsed.", endBounce: "Too shallow angle - bounced back to space!",
+        nextBtn: "🏆 MISSION COMPLETE", retryBtn: "TRY AGAIN", tempLabel: "Temperature"
+      },
+      it: {
+        modalTitle: "🌍 AEROFRENATA", introScene: "Ritorno sulla Terra! Lo scudo termico è danneggiato. Devi calcolare l'angolo di ingresso perfetto — troppo ripido = surriscaldamento, troppo basso = rimbalzo!",
+        bl1: "Velocità di Ingresso", bl2: "Temperatura Max", bl3: "Angolo di Ingresso", bl4: "Stato Scudo",
+        startBtn: "🌍 INIZIA", backBtn: "← INDIETRO", attemptsLabel: "TENTATIVI", scoreLabel: "PUNTEGGIO",
+        dataTitle: "📊 DATI", dl1: "Velocità:", dl2: "T Max Scudo:", dl3: "T Attuale:",
+        angleTitle: "📐 ANGOLO DI INGRESSO", angleLabel: "Angolo θ:", physicsTitle: "📐 RESISTENZA DELL'ARIA",
+        fn1: "Forza di resistenza", fn2: "Temperatura ~ velocità³", fn3: "Perdita energia → calore",
+        executeBtn: "🌍 ENTRA NELL'ATMOSFERA", resetBtn: "↺ RICOMINCIA", hintBtn: "💡 SUGGERIMENTO",
+        dialogueReady: "L'angolo di ingresso determina quanta energia si converte in calore!",
+        dialogueHint: "Pensa: Angolo ripido = più resistenza = più calore. Angolo basso = meno frenata. Trova l'equilibrio!",
+        footerText: "SPACE: Entra | R: Ricomincia | Terra — Ingresso Atmosferico",
+        resultSuccess: "ATTERRAGGIO RIUSCITO!", resultFail: "FALLIMENTO",
+        endSuccess: "L'equipaggio è tornato sano e salvo sulla Terra!", endOverheat: "Surriscaldamento! Lo scudo è collassato.", endBounce: "Angolo troppo basso - rimbalzato nello spazio!",
+        nextBtn: "🏆 MISSIONE COMPLETATA", retryBtn: "RIPROVA", tempLabel: "Temperatura"
+      },
+      es: {
+        modalTitle: "🌍 AEROFRENADO", introScene: "¡Regreso a la Tierra! El escudo térmico está dañado. Debes calcular el ángulo de entrada perfecto — muy empinado = sobrecalentamiento, muy bajo = rebote!",
+        bl1: "Velocidad de Entrada", bl2: "Temperatura Máx", bl3: "Ángulo de Entrada", bl4: "Estado del Escudo",
+        startBtn: "🌍 INICIAR", backBtn: "← ATRÁS", attemptsLabel: "INTENTOS", scoreLabel: "PUNTOS",
+        dataTitle: "📊 DATOS", dl1: "Velocidad:", dl2: "T Máx Escudo:", dl3: "T Actual:",
+        angleTitle: "📐 ÁNGULO DE ENTRADA", angleLabel: "Ángulo θ:", physicsTitle: "📐 RESISTENCIA DEL AIRE",
+        fn1: "Fuerza de arrastre", fn2: "Temperatura ~ velocidad³", fn3: "Pérdida de energía → calor",
+        executeBtn: "🌍 ENTRAR ATMÓSFERA", resetBtn: "↺ REINICIAR", hintBtn: "💡 PISTA",
+        dialogueReady: "¡El ángulo de entrada determina cuánta energía se convierte en calor!",
+        dialogueHint: "Piensa: Ángulo empinado = más arrastre = más calor. Ángulo bajo = menos frenado. ¡Encuentra el equilibrio!",
+        footerText: "SPACE: Entrar | R: Reiniciar | Tierra — Entrada Atmosférica",
+        resultSuccess: "¡ATERRIZAJE EXITOSO!", resultFail: "FALLO",
+        endSuccess: "¡La tripulación regresó sana y salva a la Tierra!", endOverheat: "¡Sobrecalentamiento! El escudo colapsó.", endBounce: "Ángulo muy bajo - ¡rebotó al espacio!",
+        nextBtn: "🏆 MISIÓN COMPLETADA", retryBtn: "REINTENTAR", tempLabel: "Temperatura"
+      },
+      de: {
+        modalTitle: "🌍 AEROBRAKING", introScene: "Rückkehr zur Erde! Der Hitzeschild ist beschädigt. Du musst den perfekten Eintrittswinkel berechnen — zu steil = Überhitzung, zu flach = Abprallen!",
+        bl1: "Eintrittsgeschwindigkeit", bl2: "Max Temperatur", bl3: "Eintrittswinkel", bl4: "Schildstatus",
+        startBtn: "🌍 START", backBtn: "← ZURÜCK", attemptsLabel: "VERSUCHE", scoreLabel: "PUNKTE",
+        dataTitle: "📊 DATEN", dl1: "Geschwindigkeit:", dl2: "Max Schild-T:", dl3: "Aktuelle T:",
+        angleTitle: "📐 EINTRITTSWINKEL", angleLabel: "Winkel θ:", physicsTitle: "📐 LUFTWIDERSTAND",
+        fn1: "Widerstandskraft", fn2: "Temperatur ~ Geschwindigkeit³", fn3: "Energieverlust → Wärme",
+        executeBtn: "🌍 ATMOSPHÄRE EINTRETEN", resetBtn: "↺ NEUSTART", hintBtn: "💡 HINWEIS",
+        dialogueReady: "Der Eintrittswinkel bestimmt wie viel Energie in Wärme umgewandelt wird!",
+        dialogueHint: "Denke: Steiler Winkel = mehr Widerstand = mehr Hitze. Flacher Winkel = weniger Bremsung. Finde das Gleichgewicht!",
+        footerText: "SPACE: Eintreten | R: Neustart | Erde — Atmosphäreneintritt",
+        resultSuccess: "ERFOLGREICHE LANDUNG!", resultFail: "FEHLGESCHLAGEN",
+        endSuccess: "Die Crew kehrte sicher zur Erde zurück!", endOverheat: "Überhitzung! Der Schild ist kollabiert.", endBounce: "Zu flacher Winkel - ins All abgeprallt!",
+        nextBtn: "🏆 MISSION ABGESCHLOSSEN", retryBtn: "NOCHMAL", tempLabel: "Temperatur"
+      },
+      fr: {
+        modalTitle: "🌍 AÉROFREINAGE", introScene: "Retour sur Terre! Le bouclier thermique est endommagé. Tu dois calculer l'angle d'entrée parfait — trop raide = surchauffe, trop faible = rebond!",
+        bl1: "Vitesse d'Entrée", bl2: "Température Max", bl3: "Angle d'Entrée", bl4: "État du Bouclier",
+        startBtn: "🌍 DÉMARRER", backBtn: "← RETOUR", attemptsLabel: "ESSAIS", scoreLabel: "SCORE",
+        dataTitle: "📊 DONNÉES", dl1: "Vitesse:", dl2: "T Max Bouclier:", dl3: "T Actuelle:",
+        angleTitle: "📐 ANGLE D'ENTRÉE", angleLabel: "Angle θ:", physicsTitle: "📐 RÉSISTANCE DE L'AIR",
+        fn1: "Force de traînée", fn2: "Température ~ vitesse³", fn3: "Perte d'énergie → chaleur",
+        executeBtn: "🌍 ENTRER ATMOSPHÈRE", resetBtn: "↺ RECOMMENCER", hintBtn: "💡 INDICE",
+        dialogueReady: "L'angle d'entrée détermine combien d'énergie se convertit en chaleur!",
+        dialogueHint: "Pense: Angle raide = plus de traînée = plus de chaleur. Angle faible = moins de freinage. Trouve l'équilibre!",
+        footerText: "SPACE: Entrer | R: Recommencer | Terre — Entrée Atmosphérique",
+        resultSuccess: "ATTERRISSAGE RÉUSSI!", resultFail: "ÉCHEC",
+        endSuccess: "L'équipage est rentré sain et sauf sur Terre!", endOverheat: "Surchauffe! Le bouclier s'est effondré.", endBounce: "Angle trop faible - rebondi dans l'espace!",
+        nextBtn: "🏆 MISSION TERMINÉE", retryBtn: "RÉESSAYER", tempLabel: "Température"
+      },
+      bg: {
+        modalTitle: "🌍 АЕРОФРЕНИРВАНЕ", introScene: "Връщане на Земята! Топлинният щит е повреден. Трябва да изчислиш перфектния ъгъл на влизане — твърде стръмен = прегряване, твърде плосък = отскачане!",
+        bl1: "Скорост на Влизане", bl2: "Макс Температура", bl3: "Ъгъл на Влизане", bl4: "Състояние на Щита",
+        startBtn: "🌍 СТАРТ", backBtn: "← НАЗАД", attemptsLabel: "ОПИТИ", scoreLabel: "ТОЧКИ",
+        dataTitle: "📊 ДАННИ", dl1: "Скорост:", dl2: "Макс T на щита:", dl3: "Текуща T:",
+        angleTitle: "📐 ЪГЪЛ НА ВЛИЗАНЕ", angleLabel: "Ъгъл θ:", physicsTitle: "📐 ВЪЗДУШНО СЪПРОТИВЛЕНИЕ",
+        fn1: "Сила на съпротивление", fn2: "Температура ~ скорост³", fn3: "Загуба на енергия → топлина",
+        executeBtn: "🌍 ВЛЕЗ В АТМОСФЕРАТА", resetBtn: "↺ РЕСТАРТ", hintBtn: "💡 ПОДСКАЗКА",
+        dialogueReady: "Ъгълът на влизане определя колко енергия се превръща в топлина!",
+        dialogueHint: "Помисли: Стръмен ъгъл = повече съпротивление = повече топлина. Плосък ъгъл = по-малко спиране. Намери баланса!",
+        footerText: "SPACE: Влез | R: Рестарт | Земя — Атмосферно Влизане",
+        resultSuccess: "УСПЕШНО КАЦАНЕ!", resultFail: "НЕУСПЕХ",
+        endSuccess: "Екипажът се върна безопасно на Земята!", endOverheat: "Прегряване! Щитът се срина.", endBounce: "Твърде плосък ъгъл - отскочи в космоса!",
+        nextBtn: "🏆 МИСИЯ ЗАВЪРШЕНА", retryBtn: "ОПИТАЙ ОТНОВО", tempLabel: "Температура"
+      },
+      pt: {
+        modalTitle: "🌍 AEROFRENAGEM", introScene: "Retorno à Terra! O escudo térmico está danificado. Você deve calcular o ângulo de entrada perfeito — muito íngreme = superaquecimento, muito raso = ricochete!",
+        bl1: "Velocidade de Entrada", bl2: "Temperatura Máx", bl3: "Ângulo de Entrada", bl4: "Estado do Escudo",
+        startBtn: "🌍 INICIAR", backBtn: "← VOLTAR", attemptsLabel: "TENTATIVAS", scoreLabel: "PONTOS",
+        dataTitle: "📊 DADOS", dl1: "Velocidade:", dl2: "T Máx Escudo:", dl3: "T Atual:",
+        angleTitle: "📐 ÂNGULO DE ENTRADA", angleLabel: "Ângulo θ:", physicsTitle: "📐 RESISTÊNCIA DO AR",
+        fn1: "Força de arrasto", fn2: "Temperatura ~ velocidade³", fn3: "Perda de energia → calor",
+        executeBtn: "🌍 ENTRAR ATMOSFERA", resetBtn: "↺ REINICIAR", hintBtn: "💡 DICA",
+        dialogueReady: "O ângulo de entrada determina quanta energia se converte em calor!",
+        dialogueHint: "Pense: Ângulo íngreme = mais arrasto = mais calor. Ângulo raso = menos frenagem. Encontre o equilíbrio!",
+        footerText: "SPACE: Entrar | R: Reiniciar | Terra — Entrada Atmosférica",
+        resultSuccess: "POUSO BEM-SUCEDIDO!", resultFail: "FALHA",
+        endSuccess: "A tripulação voltou em segurança à Terra!", endOverheat: "Superaquecimento! O escudo colapsou.", endBounce: "Ângulo muito raso - ricocheteou para o espaço!",
+        nextBtn: "🏆 MISSÃO CONCLUÍDA", retryBtn: "TENTAR NOVAMENTE", tempLabel: "Temperatura"
+      },
+      fi: {
+        modalTitle: "🌍 ILMAJARRUTUS", introScene: "Paluu Maahan! Lämpökilpi on vaurioitunut. Sinun täytyy laskea täydellinen sisääntulokulma — liian jyrkkä = ylikuumeneminen, liian loiva = pomppaaminen!",
+        bl1: "Sisääntulonopeus", bl2: "Max Lämpötila", bl3: "Sisääntulokulma", bl4: "Kilven Tila",
+        startBtn: "🌍 ALOITA", backBtn: "← TAKAISIN", attemptsLabel: "YRITYKSET", scoreLabel: "PISTEET",
+        dataTitle: "📊 TIEDOT", dl1: "Nopeus:", dl2: "Kilven Max T:", dl3: "Nykyinen T:",
+        angleTitle: "📐 SISÄÄNTULOKULMA", angleLabel: "Kulma θ:", physicsTitle: "📐 ILMANVASTUS",
+        fn1: "Vastusvoima", fn2: "Lämpötila ~ nopeus³", fn3: "Energiahäviö → lämpö",
+        executeBtn: "🌍 SIIRRY ILMAKEHÄÄN", resetBtn: "↺ ALUSTA", hintBtn: "💡 VIHJE",
+        dialogueReady: "Sisääntulokulma määrittää kuinka paljon energiaa muuttuu lämmöksi!",
+        dialogueHint: "Ajattele: Jyrkkä kulma = enemmän vastusta = enemmän lämpöä. Loiva kulma = vähemmän jarrutusta. Löydä tasapaino!",
+        footerText: "SPACE: Siirry | R: Alusta | Maa — Ilmakehään Saapuminen",
+        resultSuccess: "ONNISTUNUT LASKU!", resultFail: "EPÄONNISTUI",
+        endSuccess: "Miehistö palasi turvallisesti Maahan!", endOverheat: "Ylikuumeneminen! Kilpi romahti.", endBounce: "Liian loiva kulma - pomppasi avaruuteen!",
+        nextBtn: "🏆 TEHTÄVÄ SUORITETTU", retryBtn: "YRITÄ UUDELLEEN", tempLabel: "Lämpötila"
+      }
+    };
+    
+    let state = {lang:'en', phase:'intro', attempts:0, score:100, angle:4, v:11, T_MAX:2000, shipY:0, anim:false};
+    const $ = id => document.getElementById(id);
+    const canvas = $('gameCanvas'), ctx = canvas.getContext('2d');
+    
+    function t(key) { return I18N[state.lang][key] || key; }
+    
+    function setLanguage(lang) {
+      state.lang = lang;
+      localStorage.setItem('atlas_language', lang);
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+      document.querySelectorAll('.lang-option').forEach(o => o.classList.toggle('active', o.dataset.lang === lang));
+      updateAllText();
+    }
+    
+    function updateAllText() {
+      $('modalTitle').textContent = t('modalTitle');
+      $('introScene').textContent = t('introScene');
+      $('bl1').textContent = t('bl1'); $('bl2').textContent = t('bl2');
+      $('bl3').textContent = t('bl3'); $('bl4').textContent = t('bl4');
+      $('startBtn').textContent = t('startBtn'); $('backBtn').textContent = t('backBtn');
+      $('attemptsLabel').textContent = t('attemptsLabel'); $('scoreLabel').textContent = t('scoreLabel');
+      $('dataTitle').textContent = t('dataTitle');
+      $('dl1').textContent = t('dl1'); $('dl2').textContent = t('dl2'); $('dl3').textContent = t('dl3');
+      $('angleTitle').textContent = t('angleTitle'); $('angleLabel').textContent = t('angleLabel');
+      $('physicsTitle').textContent = t('physicsTitle');
+      $('fn1').textContent = t('fn1'); $('fn2').textContent = t('fn2'); $('fn3').textContent = t('fn3');
+      $('executeBtn').textContent = t('executeBtn'); $('resetBtn').textContent = t('resetBtn'); $('hintBtn').textContent = t('hintBtn');
+      $('dialogueText').textContent = t('dialogueReady');
+      $('footerText').textContent = t('footerText');
+      $('nextBtn').textContent = t('nextBtn'); $('retryBtn').textContent = t('retryBtn');
+    }
+    
+    function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
+    function calcTemp(a) { const base = 500; const factor = Math.pow(a/7, 2.5); return Math.min(3000, base * factor); }
+    
+    function render() {
+      const W = canvas.width, H = canvas.height;
+      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < 100; i++) { ctx.fillStyle = `rgba(255,255,255,${Math.random()*.5+.3})`; ctx.beginPath(); ctx.arc((i*137)%W, (i*73)%H, Math.random()+.5, 0, Math.PI*2); ctx.fill(); }
+      const earthR = Math.min(W, H) * 0.4;
+      const gr = ctx.createRadialGradient(W/2, H+earthR*0.3, earthR*0.8, W/2, H+earthR*0.3, earthR);
+      gr.addColorStop(0, '#4361ee'); gr.addColorStop(0.3, '#1a237e'); gr.addColorStop(1, 'transparent');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(W/2, H+earthR*0.3, earthR, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = 'rgba(67,97,238,0.3)'; ctx.lineWidth = 30; ctx.beginPath(); ctx.arc(W/2, H+earthR*0.3, earthR+20, Math.PI, 2*Math.PI); ctx.stroke();
+      const shipX = W*0.3 + state.shipY*0.5, shipYpos = 50 + state.shipY;
+      const T = calcTemp(state.angle);
+      const heatColor = T > 2000 ? '#e63946' : T > 1500 ? '#ffd60a' : '#06d6a0';
+      if (state.anim && state.shipY > 50) {
+        ctx.fillStyle = heatColor; ctx.globalAlpha = 0.5;
+        ctx.beginPath(); ctx.moveTo(shipX-30, shipYpos); ctx.lineTo(shipX-80, shipYpos+10); ctx.lineTo(shipX-30, shipYpos+20); ctx.closePath(); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      ctx.fillStyle = '#ccc'; ctx.beginPath(); ctx.arc(shipX, shipYpos, 15, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.fillText('🚀', shipX-8, shipYpos+5);
+      ctx.strokeStyle = 'rgba(255,214,10,0.3)'; ctx.setLineDash([5,5]); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(50, 30); ctx.lineTo(W*0.8, H*0.7); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#ffd60a'; ctx.font = '16px monospace';
+      ctx.fillText(t('angleLabel') + ' ' + state.angle + '°', 20, 30);
+      ctx.fillStyle = T > state.T_MAX ? '#e63946' : '#06d6a0';
+      ctx.fillText(t('tempLabel') + ': ' + T.toFixed(0) + '°C (max: ' + state.T_MAX + '°C)', 20, 55);
+      ctx.fillText(T > state.T_MAX ? '⚠️' : state.angle < 5 ? '⚠️' : '✓', 20, 80);
+      $('currentT').textContent = T.toFixed(0) + '°C';
+      $('currentT').style.color = T > state.T_MAX ? '#e63946' : '#06d6a0';
+      $('tempFill').style.width = (T/3000*100) + '%';
+    }
+    
+    function execute() {
+      if (state.phase !== 'ready' || state.anim) return;
+      state.attempts++; $('attemptsDisplay').textContent = state.attempts;
+      state.anim = true; state.shipY = 0;
+      const T = calcTemp(state.angle);
+      const anim = () => {
+        state.shipY += 5; render();
+        if (state.shipY < canvas.height * 0.6) requestAnimationFrame(anim);
+        else { state.anim = false; const success = T <= state.T_MAX && state.angle >= 5; showEnd(success, T); }
+      };
+      anim();
+    }
+    
+    function showEnd(ok, T) {
+      state.score = ok ? Math.max(0, 100 - (state.attempts-1)*15) : 0;
+      $('resultMedal').textContent = ok ? '🥇' : '💔';
+      $('resultTitle').textContent = ok ? t('resultSuccess') : t('resultFail');
+      let msg = ok ? t('endSuccess') : '';
+      if (T > state.T_MAX) msg = t('endOverheat');
+      if (state.angle < 5) msg = t('endBounce');
+      $('endCinematic').innerHTML = '<p>' + msg + '</p><p>' + t('tempLabel') + ': ' + T.toFixed(0) + '°C</p>';
+      $('nextBtn').style.display = ok ? 'block' : 'none';
+      $('endModal').classList.remove('hidden');
+      localStorage.setItem('atlas_game9_completed', ok);
+    }
+    
+    function reset() { state.shipY = 0; state.phase = 'ready'; render(); }
+    function hint() { $('dialogueText').textContent = t('dialogueHint'); state.score = Math.max(0, state.score - 5); $('scoreDisplay').textContent = state.score; }
+    function startGame() { state.phase = 'ready'; $('introModal').classList.add('hidden'); }
+    function goBack() { window.location.href = 'index.html'; }
+    function victory() { window.location.href = 'index.html'; }
+    function retry() { $('endModal').classList.add('hidden'); state.attempts = 0; state.score = 100; $('attemptsDisplay').textContent = '0'; $('scoreDisplay').textContent = '100'; reset(); }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      const sl = localStorage.getItem('atlas_language'); if (sl) setLanguage(sl); else updateAllText();
+      resize(); window.addEventListener('resize', () => { resize(); render(); });
+      $('angleSlider').addEventListener('input', e => { state.angle = parseFloat(e.target.value); $('angleDisplay').textContent = state.angle + '°'; render(); });
+      document.addEventListener('keydown', e => { if (e.code === 'Space') execute(); if (e.code === 'KeyR') reset(); });
+      render();
+    });
+  </script>
+</body>
+</html>
